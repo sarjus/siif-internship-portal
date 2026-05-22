@@ -1,0 +1,124 @@
+import { randomBytes, createHash } from 'node:crypto'
+import { cookies } from 'next/headers'
+import { addDays, isBefore } from 'date-fns'
+import { getSupabaseAdminClient } from '@/lib/supabase/admin'
+import type { SessionUser } from '@/lib/types'
+
+const DEFAULT_COOKIE_NAME = 'siif_portal_session'
+
+function getCookieName (): string {
+  return process.env.SESSION_COOKIE_NAME ?? DEFAULT_COOKIE_NAME
+}
+
+function sha256 (value: string): string {
+  return createHash('sha256').update(value).digest('hex')
+}
+
+function sessionDays (): number {
+  const parsed = Number(process.env.SESSION_TTL_DAYS ?? '14')
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 14
+}
+
+export function createSessionToken (): string {
+  return randomBytes(32).toString('hex')
+}
+
+export function hashSessionToken (token: string): string {
+  return sha256(token)
+}
+
+export async function createSessionRecord (userId: string): Promise<{ token: string; expiresAt: string }> {
+  const supabase = getSupabaseAdminClient()
+  const token = createSessionToken()
+  const expiresAt = addDays(new Date(), sessionDays()).toISOString()
+
+  const { error } = await supabase.from('sessions').insert({
+    user_id: userId,
+    token_hash: hashSessionToken(token),
+    expires_at: expiresAt,
+    revoked_at: null,
+    last_seen_at: new Date().toISOString()
+  })
+
+  if (error) {
+    throw new Error(error.message)
+  }
+
+  return { token, expiresAt }
+}
+
+export async function revokeSessionByToken (token: string): Promise<void> {
+  const supabase = getSupabaseAdminClient()
+  await supabase.from('sessions').delete().eq('token_hash', hashSessionToken(token))
+}
+
+export async function revokeCurrentSession (): Promise<void> {
+  const cookieStore = cookies()
+  const token = cookieStore.get(getCookieName())?.value
+
+  if (!token) return
+  await revokeSessionByToken(token)
+  cookieStore.delete(getCookieName())
+}
+
+export async function getSessionUser (): Promise<SessionUser | null> {
+  const cookieStore = cookies()
+  const token = cookieStore.get(getCookieName())?.value
+
+  if (!token) return null
+
+  const supabase = getSupabaseAdminClient()
+  const tokenHash = hashSessionToken(token)
+
+  const { data: session, error: sessionError } = await supabase
+    .from('sessions')
+    .select('id, user_id, expires_at, revoked_at')
+    .eq('token_hash', tokenHash)
+    .maybeSingle()
+
+  if (sessionError || !session) return null
+  if (session.revoked_at) return null
+  if (isBefore(new Date(session.expires_at), new Date())) return null
+
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select('id, full_name, email, role, phone, profile_image, account_status, created_at')
+    .eq('id', session.user_id)
+    .maybeSingle()
+
+  if (userError || !user) return null
+
+  await supabase.from('sessions').update({ last_seen_at: new Date().toISOString() }).eq('id', session.id)
+
+  if (user.role === 'company') {
+    const { data: company } = await supabase
+      .from('companies')
+      .select('company_name')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    return {
+      ...user,
+      company_name: company?.company_name ?? null
+    }
+  }
+
+  if (user.role === 'student') {
+    const { data: student } = await supabase
+      .from('student_profiles')
+      .select('department')
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    return {
+      ...user,
+      department: student?.department ?? null
+    }
+  }
+
+  return user
+}
+
+export function sessionCookieName (): string {
+  return getCookieName()
+}
