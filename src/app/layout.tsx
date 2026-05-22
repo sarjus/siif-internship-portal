@@ -12,7 +12,9 @@ export const metadata: Metadata = {
   title: 'INTERNx SIIF - Intership Portal',
   description: 'A modern internship management portal for incubators, companies, and students.',
   icons: {
-    icon: '/favicon.svg'
+    icon: '/SIIF%20Logo%20Icon.png',
+    shortcut: '/SIIF%20Logo%20Icon.png',
+    apple: '/SIIF%20Logo%20Icon.png'
   }
 }
 
