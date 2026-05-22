@@ -1,41 +1,123 @@
 import Link from 'next/link'
-import { ArrowRight, BadgeCheck, BriefcaseBusiness, ChartColumn, Layers3, ShieldCheck, Sparkles } from 'lucide-react'
+import Image from 'next/image'
+import { ArrowRight, CalendarClock, ChevronRight, MapPin, Wallet } from 'lucide-react'
 import { BrandMark } from '@/components/layout/brand-mark'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { getSessionUser } from '@/lib/auth/session'
 import { getDashboardPath } from '@/lib/auth/guards'
+import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 
 const roleCards = [
   {
-    title: 'Incubator Admin',
-    description: 'Manage company approvals, internships, applications, announcements, and analytics from one control room.',
-    icon: ShieldCheck,
-    href: '/login'
+    title: 'Where startups meet student talent',
+    description: 'Bridge the gap between emerging startups and skilled students through streamlined applications, collaboration, and hiring workflows.'
   },
   {
-    title: 'Company / Startup',
-    description: 'Create internships, review applicants, shortlist candidates, and coordinate interviews with the incubator.',
-    icon: BriefcaseBusiness,
-    href: '/register'
+    title: 'One platform for internships and innovation',
+    description: 'Manage opportunities, applications, approvals, and onboarding from a single ecosystem designed for startup-driven growth.'
   },
   {
-    title: 'Student',
-    description: 'Build a profile, upload your resume, browse roles, apply quickly, and track every status update.',
-    icon: Layers3,
-    href: '/register'
+    title: 'Building careers through startup ecosystems',
+    description: 'Empowering students with hands-on industry exposure while helping startups discover passionate young talent.'
   }
 ]
 
-const features = [
-  { title: 'Custom auth', description: 'Manual registration, bcrypt password hashing, and secure session cookies without Supabase Auth.', icon: BadgeCheck },
-  { title: 'Role-based portals', description: 'Separate workflows for admin, startup, and student users with protected dashboards.', icon: ShieldCheck },
-  { title: 'Storage-ready uploads', description: 'Resumes, logos, profile photos, and brochures can be uploaded into Supabase Storage buckets.', icon: ChartColumn },
-  { title: 'Modern interface', description: 'A polished incubator-inspired UI with responsive shells, cards, skeletons, and geometric motion.', icon: Sparkles }
+type InternshipOffering = {
+  id: string
+  title: string
+  company: string
+  location: string
+  stipend: string
+  duration: string
+  internshipType: string
+}
+
+type InternshipRow = {
+  id: string | null
+  title: string | null
+  location: string | null
+  stipend: string | null
+  duration: string | null
+  internship_type: string | null
+  companies?: Array<{ company_name?: string | null }> | { company_name?: string | null } | null
+}
+
+const fallbackInternshipOfferings: InternshipOffering[] = [
+  {
+    id: 'offering-1',
+    title: 'Accounts',
+    company: 'Zebronics India Private Limited',
+    location: 'Chennai',
+    stipend: 'Rs 12,000 - 18,000 /month',
+    duration: '6 Months',
+    internshipType: 'full_time'
+  },
+  {
+    id: 'offering-2',
+    title: 'Content Programming',
+    company: 'Hungama Digital Media Entertainment Private Limited',
+    location: 'Mumbai',
+    stipend: 'Rs 5,000 /month',
+    duration: '3 Months',
+    internshipType: 'part_time'
+  },
+  {
+    id: 'offering-3',
+    title: 'Human Resources (HR)',
+    company: 'Motilal Oswal Financial Services Limited',
+    location: 'Thane',
+    stipend: 'Rs 5,000 - 8,000 /month',
+    duration: '6 Months',
+    internshipType: 'full_time'
+  },
+  {
+    id: 'offering-4',
+    title: 'HR Coordinator/Talent Acquisition',
+    company: 'Turner & Townsend',
+    location: 'Ahmedabad, Mumbai',
+    stipend: 'Rs 5,000 - 10,000 /month',
+    duration: '2 Months',
+    internshipType: 'remote'
+  }
 ]
 
 export default async function HomePage () {
   const user = await getSessionUser()
+  const supabase = getSupabaseAdminClient()
+
+  let internshipOfferings: InternshipOffering[] = fallbackInternshipOfferings
+
+  try {
+    const { data } = await supabase
+      .from('internships')
+      .select('id, title, location, stipend, duration, internship_type, companies(company_name)')
+      .order('created_at', { ascending: false })
+      .limit(8)
+
+    if (Array.isArray(data) && data.length > 0) {
+      internshipOfferings = (data as InternshipRow[]).map((row) => {
+        const companyRow = Array.isArray(row.companies) ? row.companies[0] ?? null : row.companies ?? null
+
+        return {
+          id: String(row.id),
+          title: row.title ?? 'Internship role',
+          company: companyRow?.company_name ?? 'Incubated company',
+          location: row.location ?? 'Location not specified',
+          stipend: row.stipend ?? 'Stipend not specified',
+          duration: row.duration ?? 'Duration not specified',
+          internshipType: row.internship_type ?? 'full_time'
+        }
+      })
+    }
+  } catch {
+    internshipOfferings = fallbackInternshipOfferings
+  }
+
+  const internshipFilters = [
+    'All',
+    ...Array.from(new Set(internshipOfferings.map((item) => item.internshipType.replace('_', ' '))))
+  ]
 
   return (
     <div className="noise">
@@ -54,64 +136,79 @@ export default async function HomePage () {
       </header>
 
       <main>
-        <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-grid opacity-20" />
-          <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-24">
+        <section className="relative overflow-hidden bg-gradient-to-r from-aurora-600 to-aurora-500">
+          <div className="absolute inset-0 bg-grid opacity-10" />
+          <div className="absolute -right-20 -top-24 h-[420px] w-[420px] rounded-full bg-white/10" />
+          <div className="absolute right-[-180px] top-[110px] h-[520px] w-[520px] rounded-full bg-white/10" />
+
+          <div className="mx-auto grid max-w-7xl gap-10 px-4 py-6 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:px-8 lg:py-8">
             <div className="relative z-10 flex flex-col justify-center">
-              <div className="mb-6 inline-flex w-fit items-center gap-2 rounded-full border border-sky-400/20 bg-sky-400/10 px-4 py-2 text-sm text-sky-100">
-                <Sparkles className="h-4 w-4" />
-                Internship ecosystem for incubators
-              </div>
-              <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-7xl">
-                Manage startups, students, and internships from one secure portal.
+              <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
+                SIIF&apos;s <span className="text-amber-300">internship platform</span>
               </h1>
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-300">
-                Built on Supabase Postgres and Storage, with a fully custom authentication layer, role-based access, and dashboards for incubator admins, startups, and students.
+              <p className="mt-4 max-w-2xl text-2xl text-white/90 sm:text-3xl">
+                For startup hiring, internships, and incubator programs.
               </p>
-              <div className="mt-8 flex flex-wrap gap-4">
-                <Link href="/register"><Button size="lg">Create account</Button></Link>
-                <Link href="/login"><Button variant="outline" size="lg">Sign in</Button></Link>
-              </div>
-              <div className="mt-10 grid gap-4 sm:grid-cols-3">
-                {[
-                  ['3 roles', 'Admin, company, student'],
-                  ['Manual auth', 'bcrypt + session cookies'],
-                  ['Supabase-ready', 'Database, API, storage']
-                ].map(([title, text]) => (
-                  <div key={title} className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                    <p className="text-sm font-semibold text-white">{title}</p>
-                    <p className="mt-1 text-sm text-slate-400">{text}</p>
-                  </div>
-                ))}
-              </div>
             </div>
 
-            <div className="relative z-10 flex items-center justify-center">
-              <div className="relative h-[460px] w-full max-w-[520px]">
-                <div className="hero-orbit absolute inset-[8%] rounded-[2.5rem] shadow-glow" />
-                <div className="absolute left-[8%] top-[12%] h-28 w-28 rounded-[2rem] border border-sky-400/20 bg-sky-400/15 shadow-glow animate-float" />
-                <div className="absolute right-[10%] top-[18%] h-20 w-20 rounded-[1.5rem] border border-lime-400/20 bg-lime-400/15 animate-float" style={{ animationDelay: '1.2s' }} />
-                <div className="absolute left-[24%] bottom-[12%] h-24 w-24 rounded-[2rem] border border-white/10 bg-white/10 animate-float" style={{ animationDelay: '2s' }} />
-                <Card className="absolute inset-x-[12%] top-[14%] rounded-[2rem] p-0">
-                  <CardHeader className="border-b border-white/10 px-6 py-5">
-                    <CardTitle>Portal overview</CardTitle>
-                    <CardDescription>Analytics, approvals, and applications at a glance.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="grid gap-4 px-6 py-6">
-                    <div className="grid grid-cols-3 gap-3">
-                      {['Users', 'Roles', 'Files'].map((label, index) => (
-                        <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
-                          <p className="text-2xl font-bold text-white">{index === 0 ? '128' : index === 1 ? '3' : '12'}</p>
-                          <p className="mt-1 text-xs uppercase tracking-[0.25em] text-slate-400">{label}</p>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="rounded-2xl border border-dashed border-sky-400/20 bg-sky-400/10 p-4 text-sm text-sky-100">
-                      Custom auth flow, Supabase-backed data, and storage buckets for resumes, logos, and brochures.
-                    </div>
-                  </CardContent>
-                </Card>
+            <div className="relative z-10 flex items-end justify-center">
+              <div className="relative h-[400px] w-full max-w-[760px] lg:h-[500px]">
+                <Image
+                  src="/Front Page.png"
+                  alt="Students and startup candidates"
+                  fill
+                  priority
+                  className="object-contain object-bottom scale-110 lg:scale-125"
+                  sizes="(min-width: 1024px) 38vw, 90vw"
+                />
               </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+          <div className="rounded-[2rem] border border-rose-200/70 bg-rose-50/80 p-6 sm:p-8">
+            <div className="mb-5">
+              <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Internship Offerings</h2>
+            </div>
+
+            <div className="mb-6 flex flex-wrap gap-3">
+              {internshipFilters.map((filter, index) => (
+                <button
+                  key={filter}
+                  type="button"
+                  className={index === 0
+                    ? 'rounded-full border border-aurora-600 bg-aurora-500 px-5 py-2 text-sm font-semibold text-white shadow-sm'
+                    : 'rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-700 shadow-sm'}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-4">
+              {internshipOfferings.slice(0, 4).map((item) => (
+                <div key={item.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <h3 className="text-xl font-semibold tracking-tight text-slate-900">{item.title}</h3>
+                  <p className="mt-1 min-h-[48px] text-sm text-slate-600">{item.company}</p>
+
+                  <div className="mt-4 space-y-2 border-t border-slate-200 pt-4 text-sm text-slate-700">
+                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                      <p className="flex items-center gap-2"><MapPin className="h-4 w-4 text-slate-400" />{item.location}</p>
+                      <p className="flex items-center gap-2"><Wallet className="h-4 w-4 text-slate-400" />{item.stipend}</p>
+                    </div>
+                    <p className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-slate-400" />{item.duration}</p>
+                  </div>
+
+                  <div className="mt-6 flex items-center justify-between">
+                    <span className="rounded-lg bg-slate-100 px-3 py-1 text-sm text-slate-600">Internship</span>
+                    <Link href="/register" className="inline-flex items-center gap-1 text-sm font-semibold text-aurora-600 hover:text-aurora-700">
+                      View details
+                      <ChevronRight className="h-4 w-4" />
+                    </Link>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </section>
@@ -119,49 +216,19 @@ export default async function HomePage () {
         <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
           <div className="mb-8 flex items-end justify-between gap-6">
             <div>
-              <p className="text-sm uppercase tracking-[0.35em] text-sky-300">Role portals</p>
-              <h2 className="mt-2 text-3xl font-bold text-white sm:text-4xl">Built around the incubator workflow</h2>
+              <p className="text-sm uppercase tracking-[0.35em] text-sky-300">FUTURE-READY INTERNSHIPS</p>
+              <h2 className="mt-2 text-3xl font-bold text-white sm:text-4xl">Empowering innovation through industry-driven internship experiences.</h2>
             </div>
-            <p className="max-w-xl text-sm text-slate-400">
-              The layout keeps the template's dark geometric feel while turning it into a dashboard-first product experience.
-            </p>
+            
           </div>
 
           <div className="grid gap-5 lg:grid-cols-3">
             {roleCards.map((card) => {
-              const Icon = card.icon
               return (
                 <Card key={card.title} className="group hover:-translate-y-1 hover:shadow-glow">
                   <CardHeader>
-                    <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-sky-400/20 bg-sky-400/10 text-sky-200">
-                      <Icon className="h-6 w-6" />
-                    </div>
                     <CardTitle>{card.title}</CardTitle>
                     <CardDescription>{card.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Link href={card.href} className="inline-flex items-center gap-2 text-sm font-semibold text-sky-200 hover:text-sky-100">
-                      Continue <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-          <div className="grid gap-5 lg:grid-cols-4">
-            {features.map((feature) => {
-              const Icon = feature.icon
-              return (
-                <Card key={feature.title}>
-                  <CardHeader>
-                    <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5 text-sky-200">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <CardTitle className="text-lg">{feature.title}</CardTitle>
-                    <CardDescription>{feature.description}</CardDescription>
                   </CardHeader>
                 </Card>
               )
@@ -173,18 +240,18 @@ export default async function HomePage () {
           <Card className="overflow-hidden">
             <div className="grid gap-8 lg:grid-cols-[1fr_0.8fr] lg:items-center">
               <div>
-                <p className="text-sm uppercase tracking-[0.35em] text-lime-300">Production-ready stack</p>
-                <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">Supabase for data and storage. Custom code for identity.</h2>
+                <p className="text-sm uppercase tracking-[0.35em] text-lime-300">SMART ECOSYSTEM PLATFORM</p>
+                <h2 className="mt-3 text-3xl font-bold text-white sm:text-4xl">Designed to simplify internship management from application to onboarding.</h2>
                 <p className="mt-4 max-w-2xl text-slate-300">
-                  Sessions are stored in a database-backed custom session table, passwords are hashed with bcrypt, and role-based redirects happen after login. Use Supabase only where it makes sense: Postgres, APIs, storage, and optional realtime updates.
+                  INTERNx SIIF provides a centralized system for incubators, startups, and students to collaborate efficiently through secure workflows, structured approvals, and streamlined communication.
                 </p>
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 {[
-                  ['Secure sessions', 'Opaque cookie session tokens backed by the database'],
-                  ['Approval flow', 'Incubator admins approve company accounts before access'],
-                  ['Storage buckets', 'Resume, logo, profile image, and brochure uploads'],
-                  ['Role redirects', 'Users land on the right dashboard after login']
+                  ['Secure Access', 'Protected login system with encrypted credentials and role-based permissions.'],
+                  ['Centralized Management', 'Manage internships, applications, startups, and announcements from one dashboard.'],
+                  ['Application Tracking', 'Monitor application progress, shortlist candidates, and manage hiring workflows seamlessly.'],
+                  ['Role-Based Dashboards', 'UDedicated experiences for incubator admins, startups, and students.']
                 ].map(([title, text]) => (
                   <div key={title} className="rounded-3xl border border-white/10 bg-white/5 p-5">
                     <p className="font-semibold text-white">{title}</p>
@@ -200,8 +267,8 @@ export default async function HomePage () {
           <Card className="bg-gradient-to-r from-sky-500/15 to-lime-400/10">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <p className="text-sm uppercase tracking-[0.35em] text-slate-300">Start now</p>
-                <h2 className="mt-2 text-3xl font-bold text-white">Launch the portal with your Supabase keys.</h2>
+                <p className="text-sm uppercase tracking-[0.35em] text-slate-300">GET STARTED</p>
+                <h2 className="mt-2 text-3xl font-bold text-white">Launch your internship journey with INTERNx SIIF.</h2>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Link href="/register"><Button size="lg">Create account</Button></Link>
@@ -211,6 +278,47 @@ export default async function HomePage () {
           </Card>
         </section>
       </main>
+
+      <footer className="border-t border-slate-200/80 bg-white/80 backdrop-blur">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[1.1fr_0.9fr_0.9fr] lg:px-8">
+          <div className="space-y-3">
+            <p className="text-sm tracking-[0.28em] text-slate-500">INTERNx SIIF</p>
+            <p className="max-w-lg text-sm leading-7 text-slate-600">
+              Connecting students, startups, and incubators through meaningful internship opportunities, application tracking, and seamless onboarding.
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-700">QUICK LINKS</p>
+            <div className="mt-3 flex flex-col gap-2 text-sm text-slate-600">
+              <Link href="/" className="transition hover:text-aurora-700">Explore Internships</Link>
+              <Link href="/register" className="transition hover:text-aurora-700">Apply Now</Link>
+              <Link href="/login" className="transition hover:text-aurora-700">Login</Link>
+              <Link href={user ? getDashboardPath(user.role) : '/login'} className="transition hover:text-aurora-700">Dashboard</Link>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-700">PLATFORM</p>
+            <div className="mt-3 space-y-2 text-sm text-slate-600">
+              <p>Built for students, startups, and incubators to manage internships, applications, onboarding, and progress in one unified platform.</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-slate-200/80">
+          <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-5 text-sm text-slate-600 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+            <p>Copyright @SIIF 2026</p>
+            <p>
+              Developed by Sarju S,
+              {' '}
+              <a href="https://techyprofessor.in/" target="_blank" rel="noreferrer" className="text-aurora-700 underline decoration-aurora-400/60 underline-offset-4 hover:text-aurora-800">
+                https://techyprofessor.in/
+              </a>
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

@@ -25,6 +25,11 @@ create table if not exists public.companies (
 create table if not exists public.student_profiles (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.users(id) on delete cascade,
+  college_name text,
+  programme text,
+  study_year text,
+  current_cgpa text,
+  back_papers integer,
   department text,
   skills text[] not null default '{}',
   resume_url text,
@@ -33,11 +38,26 @@ create table if not exists public.student_profiles (
   portfolio text
 );
 
+alter table public.student_profiles add column if not exists college_name text;
+alter table public.student_profiles add column if not exists programme text;
+alter table public.student_profiles add column if not exists study_year text;
+alter table public.student_profiles add column if not exists current_cgpa text;
+alter table public.student_profiles add column if not exists back_papers integer;
+
 create table if not exists public.internships (
   id uuid primary key default gen_random_uuid(),
   company_id uuid not null references public.companies(id) on delete cascade,
   title text not null,
+  about text,
   description text not null,
+  who_can_apply text[] not null default '{}',
+  other_requirements text[] not null default '{}',
+  perks text[] not null default '{}',
+  start_date text,
+  additional_info text,
+  fee_type text not null default 'no_fee' check (fee_type in ('no_fee', 'one_time', 'refundable')),
+  fee_amount text,
+  fee_notes text,
   duration text not null,
   stipend text not null,
   skills_required text[] not null default '{}',
@@ -47,6 +67,29 @@ create table if not exists public.internships (
   openings integer not null default 1,
   created_at timestamp with time zone not null default now()
 );
+
+alter table public.internships add column if not exists about text;
+alter table public.internships add column if not exists who_can_apply text[] not null default '{}';
+alter table public.internships add column if not exists other_requirements text[] not null default '{}';
+alter table public.internships add column if not exists perks text[] not null default '{}';
+alter table public.internships add column if not exists start_date text;
+alter table public.internships add column if not exists additional_info text;
+alter table public.internships add column if not exists fee_type text not null default 'no_fee';
+alter table public.internships add column if not exists fee_amount text;
+alter table public.internships add column if not exists fee_notes text;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'internships_fee_type_check'
+  ) then
+    alter table public.internships
+      add constraint internships_fee_type_check check (fee_type in ('no_fee', 'one_time', 'refundable'));
+  end if;
+end
+$$;
 
 create table if not exists public.applications (
   id uuid primary key default gen_random_uuid(),

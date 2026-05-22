@@ -11,10 +11,10 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const variantStyles: Record<ButtonVariant, string> = {
-  default: 'bg-aurora-500 text-white shadow-glow hover:bg-aurora-400',
-  secondary: 'bg-slate-100/10 text-slate-100 hover:bg-slate-100/15 border border-slate-200/10',
-  outline: 'border border-slate-200/15 text-slate-100 hover:bg-slate-100/8',
-  ghost: 'text-slate-200 hover:bg-slate-100/8 hover:text-white',
+  default: 'bg-aurora-500 text-white shadow-sm shadow-primary/20 hover:bg-aurora-600 hover:shadow-md',
+  secondary: 'bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200',
+  outline: 'border border-slate-300 text-slate-700 hover:bg-slate-100',
+  ghost: 'text-slate-700 hover:bg-slate-100 hover:text-slate-900',
   destructive: 'bg-rose-500 text-white hover:bg-rose-400'
 }
 
@@ -33,7 +33,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(function Button 
       ref={ref}
       type={type}
       className={cn(
-        'inline-flex items-center justify-center rounded-full font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aurora-400 focus-visible:ring-offset-2 focus-visible:ring-offset-ink-950 disabled:pointer-events-none disabled:opacity-60',
+        'inline-flex items-center justify-center rounded-full font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aurora-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:pointer-events-none disabled:opacity-60',
         variantStyles[variant],
         sizeStyles[size],
         className

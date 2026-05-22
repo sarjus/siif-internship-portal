@@ -17,6 +17,11 @@ export type AuthUser = {
 
 export type SessionUser = AuthUser & {
   company_name?: string | null
+  college_name?: string | null
+  programme?: string | null
+  study_year?: string | null
+  current_cgpa?: string | null
+  back_papers?: number | null
   department?: string | null
 }
 

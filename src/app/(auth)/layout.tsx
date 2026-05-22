@@ -7,19 +7,19 @@ export default function AuthLayout ({ children }: Readonly<{ children: React.Rea
         <div className="space-y-6">
           <BrandMark />
           <div className="max-w-xl">
-            <p className="text-sm uppercase tracking-[0.35em] text-sky-300">Custom access</p>
-            <h1 className="mt-3 text-4xl font-bold tracking-tight text-white sm:text-5xl">Secure manual login for the incubator ecosystem.</h1>
+            <p className="text-sm uppercase tracking-[0.35em] text-sky-300">SMART INTERNSHIP MANAGEMENTs</p>
+            <h1 className="mt-3 text-4xl font-bold tracking-tight text-white sm:text-5xl">Connecting students and startups through one unified platform.</h1>
             <p className="mt-4 text-lg leading-8 text-slate-300">
-              Passwords are hashed with bcrypt, accounts are tracked in your own database tables, and sessions are managed on the server without Supabase Auth.
+              Manage internship opportunities, streamline applications, and track approvals with a secure portal designed for the SIIF innovation ecosystem.
             </p>
+            <ul className="mt-6 list-disc space-y-2 pl-6 text-slate-400">
+              <li>Centralized internship listings from SIIF startups</li>
+              <li>Streamlined application process for students</li>
+              <li>Role-based access and approval workflows</li>
+            </ul>
+            
           </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            {['Bcrypt hashing', 'Role redirects', 'Approval-based onboarding'].map((item) => (
-              <div key={item} className="rounded-3xl border border-white/10 bg-white/5 px-4 py-5 text-sm text-slate-300">
-                {item}
-              </div>
-            ))}
-          </div>
+          
         </div>
 
         <div>{children}</div>

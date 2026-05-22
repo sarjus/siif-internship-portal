@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { getResponseMessage, readJsonResponse } from '@/lib/request'
 import type { UserRole } from '@/lib/types'
 
 type Mode = 'login' | 'register' | 'forgot'
@@ -48,14 +49,14 @@ export function AuthForm ({ mode }: { mode: Mode }) {
         body: JSON.stringify(payload)
       })
 
-      const result = await response.json()
+      const result = await readJsonResponse<{ error?: string; message?: string; redirectTo?: string }>(response)
 
       if (!response.ok) {
-        throw new Error(result.error ?? 'Something went wrong')
+        throw new Error(getResponseMessage(result, 'Something went wrong'))
       }
 
       if (mode === 'forgot') {
-        setError(result.message ?? 'Reset request created. Check your email provider integration.')
+        setError(getResponseMessage(result, 'Reset request created. Check your email provider integration.'))
         return
       }
 
@@ -64,7 +65,7 @@ export function AuthForm ({ mode }: { mode: Mode }) {
         return
       }
 
-      window.location.href = result.redirectTo ?? '/admin'
+      window.location.href = typeof result.redirectTo === 'string' ? result.redirectTo : '/admin'
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Unable to submit form')
     } finally {

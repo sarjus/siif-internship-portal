@@ -15,10 +15,10 @@ module.exports = {
           700: '#20314d'
         },
         aurora: {
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7'
+          300: '#fca5a5',
+          400: '#f87171',
+          500: '#e81116',
+          600: '#c20f13'
         },
         lime: {
           300: '#bef264',
@@ -27,13 +27,13 @@ module.exports = {
         }
       },
       boxShadow: {
-        glow: '0 0 0 1px rgba(56, 189, 248, 0.16), 0 24px 80px rgba(2, 132, 199, 0.24)'
+        glow: '0 0 0 1px rgba(232, 17, 22, 0.2), 0 24px 80px rgba(194, 15, 19, 0.2)'
       },
       backgroundImage: {
-        'dashboard-grid': 'radial-gradient(circle at top left, rgba(56,189,248,0.18), transparent 30%), radial-gradient(circle at bottom right, rgba(132,204,22,0.16), transparent 35%), linear-gradient(135deg, #050816 0%, #09111f 45%, #0c1322 100%)'
+        'dashboard-grid': 'radial-gradient(circle at top left, rgba(232,17,22,0.08), transparent 34%), radial-gradient(circle at bottom right, rgba(194,15,19,0.07), transparent 36%), linear-gradient(180deg, #ffffff 0%, #fff8f8 45%, #fff4f4 100%)'
       },
       fontFamily: {
-        sans: ['var(--font-ibm-plex-sans)', 'IBM Plex Sans', 'ui-sans-serif', 'system-ui']
+        sans: ['var(--font-plus-jakarta-sans)', 'Plus Jakarta Sans', 'ui-sans-serif', 'system-ui']
       },
       keyframes: {
         float: {

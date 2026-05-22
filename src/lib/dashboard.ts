@@ -74,6 +74,12 @@ type ActivityRow = {
   metadata: Record<string, unknown> | null
 }
 
+function toTitleCase (value: string): string {
+  return value
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+}
+
 async function safeCount (query: PromiseLike<SimpleCountResult>): Promise<number> {
   const result = await query
   return result?.count ?? 0
@@ -196,7 +202,7 @@ export async function getCompanyDashboardData (user: SessionUser): Promise<Dashb
         { label: 'Open Roles', value: internshipsCount.toString(), tone: 'info' },
         { label: 'Total Applications', value: applicationsCount.toString(), tone: 'success' },
         { label: 'Shortlisted', value: String(applications.filter((row) => row.status === 'shortlisted').length), tone: 'warning' },
-        { label: 'Company Status', value: user.account_status.replace('_', ' ') }
+        { label: 'Company Status', value: toTitleCase(user.account_status) }
       ],
       highlights: internships.map((row) => ({
         id: row.id,
@@ -267,8 +273,8 @@ export async function getStudentDashboardData (user: SessionUser): Promise<Dashb
       metrics: [
         { label: 'Applications', value: applicationsCount.toString(), tone: 'success' },
         { label: 'Available Internships', value: internshipsCount.toString(), tone: 'info' },
-        { label: 'Profile Status', value: user.account_status.replace('_', ' ') },
-        { label: 'Ready Roles', value: String(internships.filter((row) => row.deadline).length) }
+        { label: 'Profile Status', value: toTitleCase(user.account_status) },
+        { label: 'Matching Roles', value: String(internships.filter((row) => row.deadline).length) }
       ],
       highlights: applications.map((row) => ({
         id: row.id,

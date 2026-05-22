@@ -106,12 +106,17 @@ export async function getSessionUser (): Promise<SessionUser | null> {
   if (user.role === 'student') {
     const { data: student } = await supabase
       .from('student_profiles')
-      .select('department')
+      .select('college_name, programme, study_year, current_cgpa, back_papers, department')
       .eq('user_id', user.id)
       .maybeSingle()
 
     return {
       ...user,
+      college_name: student?.college_name ?? null,
+      programme: student?.programme ?? null,
+      study_year: student?.study_year ?? null,
+      current_cgpa: student?.current_cgpa ?? null,
+      back_papers: student?.back_papers ?? null,
       department: student?.department ?? null
     }
   }

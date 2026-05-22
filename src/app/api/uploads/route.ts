@@ -6,6 +6,17 @@ import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 
 export const runtime = 'nodejs'
 
+const storageBucketEnvMap: Record<'resumes' | 'logos' | 'profiles' | 'brochures', string | undefined> = {
+  resumes: process.env.SUPABASE_STORAGE_BUCKET_RESUMES,
+  logos: process.env.SUPABASE_STORAGE_BUCKET_LOGOS,
+  profiles: process.env.SUPABASE_STORAGE_BUCKET_PROFILES,
+  brochures: process.env.SUPABASE_STORAGE_BUCKET_BROCHURES
+}
+
+function resolveBucketName (bucket: 'resumes' | 'logos' | 'profiles' | 'brochures'): string {
+  return storageBucketEnvMap[bucket]?.trim() || bucket
+}
+
 export async function POST (request: NextRequest) {
   await requireSession()
 
@@ -27,21 +38,36 @@ export async function POST (request: NextRequest) {
   const fileBuffer = Buffer.from(await file.arrayBuffer())
   const fileName = `${randomUUID()}-${createHash('sha1').update(file.name).digest('hex')}`
   const path = [parsed.data.folder || folder || '', fileName].filter(Boolean).join('/')
+  const bucketName = resolveBucketName(parsed.data.bucket)
 
-  const { error } = await supabase.storage.from(parsed.data.bucket).upload(path, fileBuffer, {
+  let { error } = await supabase.storage.from(bucketName).upload(path, fileBuffer, {
     contentType: file.type || 'application/octet-stream',
     upsert: false
   })
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error?.message?.toLowerCase().includes('bucket not found')) {
+    const { error: createBucketError } = await supabase.storage.createBucket(bucketName, {
+      public: true
+    })
+
+    if (!createBucketError) {
+      const retryResult = await supabase.storage.from(bucketName).upload(path, fileBuffer, {
+        contentType: file.type || 'application/octet-stream',
+        upsert: false
+      })
+      error = retryResult.error
+    }
   }
 
-  const { data } = supabase.storage.from(parsed.data.bucket).getPublicUrl(path)
+  if (error) {
+    return NextResponse.json({ error: `Upload failed for bucket '${bucketName}': ${error.message}` }, { status: 500 })
+  }
+
+  const { data } = supabase.storage.from(bucketName).getPublicUrl(path)
 
   return NextResponse.json({
     url: data.publicUrl,
-    bucket: parsed.data.bucket,
+    bucket: bucketName,
     path
   })
 }

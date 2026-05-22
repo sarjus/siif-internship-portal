@@ -47,6 +47,11 @@ export const companyProfileSchema = z.object({
 })
 
 export const studentProfileSchema = z.object({
+  college_name: z.string().min(2, 'College name is required'),
+  programme: z.string().min(2, 'Programme is required'),
+  study_year: z.string().min(2, 'Year of studying is required'),
+  current_cgpa: z.string().min(1, 'Current CGPA is required'),
+  back_papers: z.coerce.number().int().min(0, 'Back papers cannot be negative'),
   department: z.string().min(2, 'Department is required'),
   skills: z.array(z.string().min(1)).default([]),
   resume_url: z.string().url('Enter a valid resume URL').optional().or(z.literal('')),

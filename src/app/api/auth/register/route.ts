@@ -56,6 +56,11 @@ export async function POST (request: NextRequest) {
   } else {
     const { error: studentError } = await supabase.from('student_profiles').insert({
       user_id: user.id,
+      college_name: null,
+      programme: null,
+      study_year: null,
+      current_cgpa: null,
+      back_papers: null,
       department: null,
       skills: [],
       resume_url: null,

@@ -16,6 +16,17 @@ export async function POST (request: NextRequest, context: { params: Promise<{ i
   }
 
   const supabase = getSupabaseAdminClient()
+  const { data: existing } = await supabase
+    .from('applications')
+    .select('id')
+    .eq('internship_id', parsed.data.internship_id)
+    .eq('student_id', user.id)
+    .maybeSingle()
+
+  if (existing) {
+    return NextResponse.json({ error: 'You have already applied for this internship' }, { status: 409 })
+  }
+
   const { data, error } = await supabase.from('applications').insert({
     internship_id: parsed.data.internship_id,
     student_id: user.id,

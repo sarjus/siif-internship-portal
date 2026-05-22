@@ -2,19 +2,37 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { internshipSchema } from '@/lib/validators'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { requireSession } from '@/lib/auth/guards'
+import { getSessionUser } from '@/lib/auth/session'
 import { logActivity } from '@/lib/activity'
 
 export const runtime = 'nodejs'
 
 export async function GET () {
   const supabase = getSupabaseAdminClient()
-  const { data, error } = await supabase.from('internships').select('id, company_id, title, description, duration, stipend, skills_required, deadline, location, internship_type, openings, created_at, companies(company_name)').order('created_at', { ascending: false })
+  const { data, error } = await supabase.from('internships').select('id, company_id, title, description, duration, stipend, skills_required, deadline, location, internship_type, openings, created_at, companies(company_name, description, website, logo)').order('created_at', { ascending: false })
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ internships: data ?? [] })
+  const sessionUser = await getSessionUser()
+
+  if (sessionUser?.role !== 'student') {
+    return NextResponse.json({ internships: data ?? [] })
+  }
+
+  const { data: applications } = await supabase
+    .from('applications')
+    .select('internship_id')
+    .eq('student_id', sessionUser.id)
+
+  const appliedInternshipIds = new Set((applications ?? []).map((row: { internship_id: string }) => row.internship_id))
+  const internshipsWithApplied = (data ?? []).map((internship) => ({
+    ...internship,
+    applied: appliedInternshipIds.has(internship.id)
+  }))
+
+  return NextResponse.json({ internships: internshipsWithApplied })
 }
 
 export async function POST (request: NextRequest) {

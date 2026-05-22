@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { getResponseMessage, readJsonResponse } from '@/lib/request'
 
 export function CompanyProfileForm ({ initialValues, companyId }: { initialValues: { company_name: string; description: string; website: string; logo: string }; companyId: string }) {
   const [busy, setBusy] = useState(false)
@@ -22,13 +23,17 @@ export function CompanyProfileForm ({ initialValues, companyId }: { initialValue
     uploadData.append('folder', `companies/${companyId}`)
 
     const response = await fetch('/api/uploads', { method: 'POST', body: uploadData })
-    const result = await response.json()
+    const result = await readJsonResponse<{ error?: string; message?: string; url?: string }>(response)
 
     if (!response.ok) {
-      throw new Error(result.error ?? 'Unable to upload company logo')
+      throw new Error(getResponseMessage(result, 'Unable to upload company logo'))
     }
 
-    return result.url as string
+    if (typeof result.url !== 'string' || !result.url) {
+      throw new Error('Upload completed without a file URL')
+    }
+
+    return result.url
   }
 
   async function handleSubmit (event: React.FormEvent<HTMLFormElement>) {
@@ -47,10 +52,10 @@ export function CompanyProfileForm ({ initialValues, companyId }: { initialValue
         })
       })
 
-      const result = await response.json()
+      const result = await readJsonResponse<{ error?: string; message?: string }>(response)
 
       if (!response.ok) {
-        throw new Error(result.error ?? 'Unable to update company profile')
+        throw new Error(getResponseMessage(result, 'Unable to update company profile'))
       }
 
       setMessage('Company profile updated successfully.')

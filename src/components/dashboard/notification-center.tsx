@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { getResponseMessage, readJsonResponse } from '@/lib/request'
 import type { DashboardListItem } from '@/lib/types'
 
 const roles = [
@@ -32,13 +33,13 @@ export function NotificationCenter ({ items }: { items: DashboardListItem[] }) {
         body: JSON.stringify(form)
       })
 
-      const result = await response.json()
+      const result = await readJsonResponse<{ error?: string; message?: string; count?: number }>(response)
 
       if (!response.ok) {
-        throw new Error(result.error ?? 'Unable to send notification')
+        throw new Error(getResponseMessage(result, 'Unable to send notification'))
       }
 
-      setMessage(`Notification sent to ${result.count} recipients.`)
+      setMessage(`Notification sent to ${typeof result.count === 'number' ? result.count : 0} recipients.`)
       setForm({ title: '', body: '', target_roles: ['student'] })
     } catch (submitError) {
       setMessage(submitError instanceof Error ? submitError.message : 'Unable to send notification')

@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { getResponseMessage, readJsonResponse } from '@/lib/request'
 
 type AccountRow = {
   id: string
@@ -30,8 +31,8 @@ export function AdminAccountPanel ({ accounts }: { accounts: AccountRow[] }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ account_status: statusById[userId] ?? 'active' })
       })
-      const result = await response.json()
-      if (!response.ok) throw new Error(result.error ?? 'Unable to update account')
+      const result = await readJsonResponse<{ error?: string; message?: string }>(response)
+      if (!response.ok) throw new Error(getResponseMessage(result, 'Unable to update account'))
       setMessage('Account updated successfully.')
     } catch (updateError) {
       setMessage(updateError instanceof Error ? updateError.message : 'Unable to update account')

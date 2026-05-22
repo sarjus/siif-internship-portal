@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { getResponseMessage, readJsonResponse } from '@/lib/request'
 
-export function StudentProfileForm ({ initialValues, userId }: { initialValues: { department: string; skills: string[]; resume_url: string; github: string; linkedin: string; portfolio: string; profile_image: string }; userId: string }) {
+export function StudentProfileForm ({ initialValues, userId }: { initialValues: { college_name: string; programme: string; study_year: string; current_cgpa: string; back_papers: number; department: string; skills: string[]; resume_url: string; github: string; linkedin: string; portfolio: string; profile_image: string }; userId: string }) {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [resumeFile, setResumeFile] = useState<File | null>(null)
@@ -22,13 +23,17 @@ export function StudentProfileForm ({ initialValues, userId }: { initialValues: 
     uploadData.append('folder', folder)
 
     const response = await fetch('/api/uploads', { method: 'POST', body: uploadData })
-    const result = await response.json()
+    const result = await readJsonResponse<{ error?: string; message?: string; url?: string }>(response)
 
     if (!response.ok) {
-      throw new Error(result.error ?? 'Unable to upload file')
+      throw new Error(getResponseMessage(result, 'Unable to upload file'))
     }
 
-    return result.url as string
+    if (typeof result.url !== 'string' || !result.url) {
+      throw new Error('Upload completed without a file URL')
+    }
+
+    return result.url
   }
 
   async function handleSubmit (event: React.FormEvent<HTMLFormElement>) {
@@ -53,10 +58,10 @@ export function StudentProfileForm ({ initialValues, userId }: { initialValues: 
         })
       })
 
-      const result = await response.json()
+      const result = await readJsonResponse<{ error?: string; message?: string }>(response)
 
       if (!response.ok) {
-        throw new Error(result.error ?? 'Unable to update student profile')
+        throw new Error(getResponseMessage(result, 'Unable to update student profile'))
       }
 
       setMessage('Student profile updated successfully.')
@@ -77,7 +82,12 @@ export function StudentProfileForm ({ initialValues, userId }: { initialValues: 
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={handleSubmit}>
+          <Input required placeholder="College name" value={form.college_name} onChange={(event) => setForm({ ...form, college_name: event.target.value })} />
           <Input required placeholder="Department" value={form.department} onChange={(event) => setForm({ ...form, department: event.target.value })} />
+          <Input required placeholder="Programme (e.g. B.Tech, MBA)" value={form.programme} onChange={(event) => setForm({ ...form, programme: event.target.value })} />
+          <Input required placeholder="Year of studying (e.g. 1st year)" value={form.study_year} onChange={(event) => setForm({ ...form, study_year: event.target.value })} />
+          <Input required placeholder="Current CGPA (e.g. 6.2)" value={form.current_cgpa} onChange={(event) => setForm({ ...form, current_cgpa: event.target.value })} />
+          <Input required type="number" min={0} placeholder="No. of back papers (e.g. 2)" value={String(form.back_papers)} onChange={(event) => setForm({ ...form, back_papers: Number(event.target.value || 0) })} />
           <Textarea required placeholder="Skills, comma separated" value={skillsText} onChange={(event) => setSkillsText(event.target.value)} />
           <Input placeholder="GitHub" value={form.github} onChange={(event) => setForm({ ...form, github: event.target.value })} />
           <Input placeholder="LinkedIn" value={form.linkedin} onChange={(event) => setForm({ ...form, linkedin: event.target.value })} />

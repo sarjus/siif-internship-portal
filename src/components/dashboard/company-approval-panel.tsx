@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { getResponseMessage, readJsonResponse } from '@/lib/request'
 
 type CompanyRow = {
   id: string
@@ -27,8 +28,8 @@ export function CompanyApprovalPanel ({ companies }: { companies: CompanyRow[] }
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ approved_status })
       })
-      const result = await response.json()
-      if (!response.ok) throw new Error(result.error ?? 'Unable to update company approval')
+      const result = await readJsonResponse<{ error?: string; message?: string }>(response)
+      if (!response.ok) throw new Error(getResponseMessage(result, 'Unable to update company approval'))
       setMessage('Company approval updated.')
     } catch (updateError) {
       setMessage(updateError instanceof Error ? updateError.message : 'Unable to update company approval')

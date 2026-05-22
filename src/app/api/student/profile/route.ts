@@ -17,6 +17,11 @@ export async function PATCH (request: NextRequest) {
 
   const supabase = getSupabaseAdminClient()
   const { error } = await supabase.from('student_profiles').update({
+    college_name: parsed.data.college_name,
+    programme: parsed.data.programme,
+    study_year: parsed.data.study_year,
+    current_cgpa: parsed.data.current_cgpa,
+    back_papers: parsed.data.back_papers,
     department: parsed.data.department,
     skills: parsed.data.skills,
     resume_url: parsed.data.resume_url || null,
