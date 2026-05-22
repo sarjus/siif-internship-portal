@@ -122,14 +122,14 @@ export default async function HomePage () {
   return (
     <div className="noise">
       <header className="relative z-10 border-b border-white/5">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <BrandMark />
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-end gap-3">
             <Link href={user ? getDashboardPath(user.role) : '/login'}>
-              <Button variant="outline">{user ? 'Open dashboard' : 'Login'}</Button>
+              <Button variant="outline" size="sm">{user ? 'Open dashboard' : 'Login'}</Button>
             </Link>
             <Link href="/register">
-              <Button>Get started <ArrowRight className="ml-2 h-4 w-4" /></Button>
+              <Button size="sm">Get started <ArrowRight className="ml-2 h-4 w-4" /></Button>
             </Link>
           </div>
         </div>
