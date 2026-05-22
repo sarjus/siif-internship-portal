@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { getSessionUser } from '@/lib/auth/session'
 import { getDashboardPath } from '@/lib/auth/guards'
 
-export default async function PortalHomePage () {
+export default async function PortalRoutePage () {
   const user = await getSessionUser()
 
   if (!user) {

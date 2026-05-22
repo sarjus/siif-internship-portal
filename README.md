@@ -16,9 +16,30 @@ A modern internship management portal for incubator admins, companies, and stude
 3. Apply the schema in `supabase/schema.sql` to your Supabase project.
 4. Run the app with `npm run dev`.
 
+## Production deployment
+
+Use a clean build in the same environment where the server will run.
+
+1. Install dependencies with `npm ci`.
+2. Remove old build output with `Remove-Item -Recurse -Force .next` (PowerShell) or `rm -rf .next` (bash).
+3. Build with `npm run build`.
+4. Start with `npm start`.
+
+If port `3000` is already occupied, run `npm start -- -p 3101` (or any open port).
+
+## Troubleshooting runtime errors
+
+If you see an App Router production error like `Cannot read properties of undefined (reading 'clientModules')`:
+
+1. Ensure you are not reusing a stale `.next` directory between images/containers/releases.
+2. Rebuild and start in the same runtime environment.
+3. Confirm there is no duplicate page route for the same path.
+4. Verify production boots by requesting `/` after `npm start`.
+
 ## Key routes
 
 * `/` marketing landing page
+* `/portal` role-aware redirect to the correct dashboard
 * `/login`, `/register`, `/forgot-password` auth screens
 * `/admin`, `/company`, `/student` protected dashboards
 
