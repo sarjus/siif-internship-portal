@@ -43,50 +43,12 @@ type InternshipRow = {
   companies?: Array<{ company_name?: string | null }> | { company_name?: string | null } | null
 }
 
-const fallbackInternshipOfferings: InternshipOffering[] = [
-  {
-    id: 'offering-1',
-    title: 'Accounts',
-    company: 'Zebronics India Private Limited',
-    location: 'Chennai',
-    stipend: 'Rs 12,000 - 18,000 /month',
-    duration: '6 Months',
-    internshipType: 'full_time'
-  },
-  {
-    id: 'offering-2',
-    title: 'Content Programming',
-    company: 'Hungama Digital Media Entertainment Private Limited',
-    location: 'Mumbai',
-    stipend: 'Rs 5,000 /month',
-    duration: '3 Months',
-    internshipType: 'part_time'
-  },
-  {
-    id: 'offering-3',
-    title: 'Human Resources (HR)',
-    company: 'Motilal Oswal Financial Services Limited',
-    location: 'Thane',
-    stipend: 'Rs 5,000 - 8,000 /month',
-    duration: '6 Months',
-    internshipType: 'full_time'
-  },
-  {
-    id: 'offering-4',
-    title: 'HR Coordinator/Talent Acquisition',
-    company: 'Turner & Townsend',
-    location: 'Ahmedabad, Mumbai',
-    stipend: 'Rs 5,000 - 10,000 /month',
-    duration: '2 Months',
-    internshipType: 'remote'
-  }
-]
-
 export default async function HomePage () {
   const user = await getSessionUser()
   const supabase = getSupabaseAdminClient()
 
-  let internshipOfferings: InternshipOffering[] = fallbackInternshipOfferings
+  let internshipOfferings: InternshipOffering[] = []
+  let internshipsLoadError = false
 
   try {
     const { data } = await supabase
@@ -111,13 +73,12 @@ export default async function HomePage () {
       })
     }
   } catch {
-    internshipOfferings = fallbackInternshipOfferings
+    internshipsLoadError = true
   }
 
-  const internshipFilters = [
-    'All',
-    ...Array.from(new Set(internshipOfferings.map((item) => item.internshipType.replace('_', ' '))))
-  ]
+  const internshipFilters = internshipOfferings.length > 0
+    ? ['All', ...Array.from(new Set(internshipOfferings.map((item) => item.internshipType.replace('_', ' '))))]
+    : []
 
   return (
     <div className="noise">
@@ -172,44 +133,63 @@ export default async function HomePage () {
               <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Internship Offerings</h2>
             </div>
 
-            <div className="mb-6 flex flex-wrap gap-3">
-              {internshipFilters.map((filter, index) => (
-                <button
-                  key={filter}
-                  type="button"
-                  className={index === 0
-                    ? 'rounded-full border border-aurora-600 bg-aurora-500 px-5 py-2 text-sm font-semibold text-white shadow-sm'
-                    : 'rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-700 shadow-sm'}
-                >
-                  {filter}
-                </button>
-              ))}
-            </div>
-
-            <div className="grid gap-4 lg:grid-cols-4">
-              {internshipOfferings.slice(0, 4).map((item) => (
-                <div key={item.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                  <h3 className="text-xl font-semibold tracking-tight text-slate-900">{item.title}</h3>
-                  <p className="mt-1 min-h-[48px] text-sm text-slate-600">{item.company}</p>
-
-                  <div className="mt-4 space-y-2 border-t border-slate-200 pt-4 text-sm text-slate-700">
-                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-                      <p className="flex items-center gap-2"><MapPin className="h-4 w-4 text-slate-400" />{item.location}</p>
-                      <p className="flex items-center gap-2"><Wallet className="h-4 w-4 text-slate-400" />{item.stipend}</p>
-                    </div>
-                    <p className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-slate-400" />{item.duration}</p>
+            {internshipOfferings.length > 0
+              ? (
+                <>
+                  <div className="mb-6 flex flex-wrap gap-3">
+                    {internshipFilters.map((filter, index) => (
+                      <button
+                        key={filter}
+                        type="button"
+                        className={index === 0
+                          ? 'rounded-full border border-aurora-600 bg-aurora-500 px-5 py-2 text-sm font-semibold text-white shadow-sm'
+                          : 'rounded-full border border-slate-200 bg-white px-5 py-2 text-sm font-medium text-slate-700 shadow-sm'}
+                      >
+                        {filter}
+                      </button>
+                    ))}
                   </div>
 
-                  <div className="mt-6 flex items-center justify-between">
-                    <span className="rounded-lg bg-slate-100 px-3 py-1 text-sm text-slate-600">Internship</span>
-                    <Link href="/register" className="inline-flex items-center gap-1 text-sm font-semibold text-aurora-600 hover:text-aurora-700">
-                      View details
-                      <ChevronRight className="h-4 w-4" />
-                    </Link>
+                  <div className="grid gap-4 lg:grid-cols-4">
+                    {internshipOfferings.slice(0, 4).map((item) => (
+                      <div key={item.id} className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                        <h3 className="text-xl font-semibold tracking-tight text-slate-900">{item.title}</h3>
+                        <p className="mt-1 min-h-[48px] text-sm text-slate-600">{item.company}</p>
+
+                        <div className="mt-4 space-y-2 border-t border-slate-200 pt-4 text-sm text-slate-700">
+                          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                            <p className="flex items-center gap-2"><MapPin className="h-4 w-4 text-slate-400" />{item.location}</p>
+                            <p className="flex items-center gap-2"><Wallet className="h-4 w-4 text-slate-400" />{item.stipend}</p>
+                          </div>
+                          <p className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-slate-400" />{item.duration}</p>
+                        </div>
+
+                        <div className="mt-6 flex items-center justify-between">
+                          <span className="rounded-lg bg-slate-100 px-3 py-1 text-sm text-slate-600">Internship</span>
+                          <Link href="/register" className="inline-flex items-center gap-1 text-sm font-semibold text-aurora-600 hover:text-aurora-700">
+                            View details
+                            <ChevronRight className="h-4 w-4" />
+                          </Link>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+                )
+              : (
+                <div className="rounded-3xl border border-dashed border-slate-300 bg-white/70 p-8 text-center">
+                  <p className="text-xl font-semibold text-slate-900">No internships are available right now.</p>
+                  <p className="mt-3 text-sm text-slate-600">
+                    {internshipsLoadError
+                      ? 'We are unable to load internship listings at the moment. Please try again shortly.'
+                      : 'New opportunities will appear here as soon as participating companies publish them.'}
+                  </p>
+                  <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                    <Link href="/register"><Button size="sm">Create account</Button></Link>
+                    <Link href="/login"><Button variant="outline" size="sm">Login</Button></Link>
                   </div>
                 </div>
-              ))}
-            </div>
+                )}
           </div>
         </section>
 
