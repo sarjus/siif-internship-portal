@@ -173,3 +173,4 @@ README.md
 .env.local
 .env.example
 supabase/schema.sql
+.env.example

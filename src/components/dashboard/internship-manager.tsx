@@ -280,52 +280,13 @@ export function InternshipManager ({ companyId, adminMode = false }: { companyId
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{selectedId ? 'Edit internship' : 'Create internship'}</CardTitle>
-        <CardDescription>Publish opportunities with Internshala-style details: about, responsibilities, requirements, perks, and application timeline.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <form className="grid gap-4 md:grid-cols-2" onSubmit={submitInternship}>
-          <Input required placeholder="Internship profile title (e.g., Human Resources HR Internship)" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} className="md:col-span-2" />
-          <Textarea required placeholder="About the internship" value={form.about} onChange={(event) => setForm({ ...form, about: event.target.value })} className="md:col-span-2" />
-          <Input required placeholder="Skills required (comma separated)" value={form.skills_required} onChange={(event) => setForm({ ...form, skills_required: event.target.value })} className="md:col-span-2" />
-          <Textarea placeholder="Who can apply (one item per line)" value={form.who_can_apply} onChange={(event) => setForm({ ...form, who_can_apply: event.target.value })} className="md:col-span-2" />
-          <Textarea placeholder="Other requirements (one item per line)" value={form.other_requirements} onChange={(event) => setForm({ ...form, other_requirements: event.target.value })} className="md:col-span-2" />
-          <Textarea placeholder="Perks (one item per line, e.g., Certificate, Letter of recommendation)" value={form.perks} onChange={(event) => setForm({ ...form, perks: event.target.value })} className="md:col-span-2" />
-          <select value={form.fee_type} onChange={(event) => setForm({ ...form, fee_type: event.target.value as 'no_fee' | 'one_time' | 'refundable' })} className="h-11 rounded-2xl border border-slate-200/10 bg-slate-100/5 px-4 text-sm text-white outline-none focus:border-aurora-400">
-            <option value="no_fee">No application fee</option>
-            <option value="one_time">One-time application fee</option>
-            <option value="refundable">Refundable application fee</option>
-          </select>
-          <Input placeholder="Fee amount (e.g., INR 500)" value={form.fee_amount} onChange={(event) => setForm({ ...form, fee_amount: event.target.value })} />
-          <Textarea placeholder="Fee notes (optional)" value={form.fee_notes} onChange={(event) => setForm({ ...form, fee_notes: event.target.value })} className="md:col-span-2" />
-          <Input required placeholder="Duration (e.g., 3 months)" value={form.duration} onChange={(event) => setForm({ ...form, duration: event.target.value })} />
-          <Input required placeholder="Stipend (e.g., INR 20000-25000 /month)" value={form.stipend} onChange={(event) => setForm({ ...form, stipend: event.target.value })} />
-          <Input placeholder="Start date (e.g., Immediately or 22 May 2026)" value={form.start_date} onChange={(event) => setForm({ ...form, start_date: event.target.value })} />
-          <Input required type="date" value={form.deadline} onChange={(event) => setForm({ ...form, deadline: event.target.value })} />
-          <Input required placeholder="Location (e.g., Gurgaon or Remote)" value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} />
-          <select value={form.internship_type} onChange={(event) => setForm({ ...form, internship_type: event.target.value as typeof internshipTypes[number] })} className="h-11 rounded-2xl border border-slate-200/10 bg-slate-100/5 px-4 text-sm text-white outline-none focus:border-aurora-400">
-            {internshipTypes.map((type) => <option key={type} value={type}>{type.replace('_', ' ')}</option>)}
-          </select>
-          <Input required type="number" min="1" placeholder="Number of openings" value={form.openings} onChange={(event) => setForm({ ...form, openings: event.target.value })} />
-          <Textarea placeholder="Additional information (optional)" value={form.additional_info} onChange={(event) => setForm({ ...form, additional_info: event.target.value })} className="md:col-span-2" />
-          {adminMode ? <Input value={form.company_id} onChange={(event) => setForm({ ...form, company_id: event.target.value })} placeholder="Company ID" className="md:col-span-2" /> : null}
-          {message ? <p className="md:col-span-2 rounded-2xl border border-slate-200/10 bg-slate-100/5 px-4 py-3 text-sm text-slate-200">{message}</p> : null}
-          <div className="md:col-span-2 flex items-center justify-end gap-3">
-            {selectedId ? (
-              <Button variant="outline" type="button" onClick={() => { setSelectedId(null); setMessage(null) }}>
-                Cancel edit
-              </Button>
-            ) : null}
-            <Button type="submit" disabled={savingId !== null}>
-              {savingId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {selectedId ? 'Update internship' : 'Create internship'}
-            </Button>
-          </div>
-        </form>
-
-        <div className="space-y-3">
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Saved internships</CardTitle>
+          <CardDescription>Manage your existing internship listings.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-semibold uppercase tracking-[0.3em] text-slate-400">Saved internships</h4>
             {busy ? <span className="text-xs text-slate-400">Refreshing...</span> : null}
@@ -354,8 +315,55 @@ export function InternshipManager ({ companyId, adminMode = false }: { companyId
             ))}
             {internships.length === 0 ? <p className="rounded-2xl border border-dashed border-slate-200/10 bg-slate-100/5 px-4 py-6 text-sm text-slate-400">No internships yet.</p> : null}
           </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>{selectedId ? 'Edit internship' : 'Create internship'}</CardTitle>
+          <CardDescription>Connect with student talent by publishing detailed internship opportunities including role expectations, skills required, benefits, duration, and hiring timeline.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form className="grid gap-4 md:grid-cols-2" onSubmit={submitInternship}>
+            <Input required placeholder="Internship profile title (e.g., Human Resources HR Internship)" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} className="md:col-span-2" />
+            <Textarea required placeholder="About the internship" value={form.about} onChange={(event) => setForm({ ...form, about: event.target.value })} className="md:col-span-2" />
+            <Input required placeholder="Skills required (comma separated)" value={form.skills_required} onChange={(event) => setForm({ ...form, skills_required: event.target.value })} className="md:col-span-2" />
+            <Textarea placeholder="Who can apply (one item per line)" value={form.who_can_apply} onChange={(event) => setForm({ ...form, who_can_apply: event.target.value })} className="md:col-span-2" />
+            <Textarea placeholder="Other requirements (one item per line)" value={form.other_requirements} onChange={(event) => setForm({ ...form, other_requirements: event.target.value })} className="md:col-span-2" />
+            <Textarea placeholder="Perks (one item per line, e.g., Certificate, Letter of recommendation)" value={form.perks} onChange={(event) => setForm({ ...form, perks: event.target.value })} className="md:col-span-2" />
+            <select value={form.fee_type} onChange={(event) => setForm({ ...form, fee_type: event.target.value as 'no_fee' | 'one_time' | 'refundable' })} className="h-11 rounded-2xl border border-slate-200/10 bg-slate-100/5 px-4 text-sm text-white outline-none focus:border-aurora-400">
+              <option value="no_fee">No application fee</option>
+              <option value="one_time">One-time application fee</option>
+              <option value="refundable">Refundable application fee</option>
+            </select>
+            <Input placeholder="Fee amount (e.g., INR 500)" value={form.fee_amount} onChange={(event) => setForm({ ...form, fee_amount: event.target.value })} />
+            <Textarea placeholder="Fee notes (optional)" value={form.fee_notes} onChange={(event) => setForm({ ...form, fee_notes: event.target.value })} className="md:col-span-2" />
+            <Input required placeholder="Duration (e.g., 3 months)" value={form.duration} onChange={(event) => setForm({ ...form, duration: event.target.value })} />
+            <Input required placeholder="Stipend (e.g., INR 20000-25000 /month)" value={form.stipend} onChange={(event) => setForm({ ...form, stipend: event.target.value })} />
+            <Input placeholder="Start date (e.g., Immediately or 22 May 2026)" value={form.start_date} onChange={(event) => setForm({ ...form, start_date: event.target.value })} />
+            <Input required type="date" value={form.deadline} onChange={(event) => setForm({ ...form, deadline: event.target.value })} />
+            <Input required placeholder="Location (e.g., Gurgaon or Remote)" value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} />
+            <select value={form.internship_type} onChange={(event) => setForm({ ...form, internship_type: event.target.value as typeof internshipTypes[number] })} className="h-11 rounded-2xl border border-slate-200/10 bg-slate-100/5 px-4 text-sm text-white outline-none focus:border-aurora-400">
+              {internshipTypes.map((type) => <option key={type} value={type}>{type.replace('_', ' ')}</option>)}
+            </select>
+            <Input required type="number" min="1" placeholder="Number of openings" value={form.openings} onChange={(event) => setForm({ ...form, openings: event.target.value })} />
+            <Textarea placeholder="Additional information (optional)" value={form.additional_info} onChange={(event) => setForm({ ...form, additional_info: event.target.value })} className="md:col-span-2" />
+            {adminMode ? <Input value={form.company_id} onChange={(event) => setForm({ ...form, company_id: event.target.value })} placeholder="Company ID" className="md:col-span-2" /> : null}
+            {message ? <p className="md:col-span-2 rounded-2xl border border-slate-200/10 bg-slate-100/5 px-4 py-3 text-sm text-slate-200">{message}</p> : null}
+            <div className="md:col-span-2 flex items-center justify-end gap-3">
+              {selectedId ? (
+                <Button variant="outline" type="button" onClick={() => { setSelectedId(null); setMessage(null) }}>
+                  Cancel edit
+                </Button>
+              ) : null}
+              <Button type="submit" disabled={savingId !== null}>
+                {savingId ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {selectedId ? 'Update internship' : 'Create internship'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   )
 }

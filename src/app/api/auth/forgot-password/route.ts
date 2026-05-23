@@ -3,6 +3,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import { addHours } from 'date-fns'
 import { forgotPasswordSchema } from '@/lib/validators'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
+import { getAppBaseUrl, isEmailConfigured, sendEmail } from '@/lib/email'
 
 export const runtime = 'nodejs'
 
@@ -35,8 +36,26 @@ export async function POST (request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  const resetUrl = `${getAppBaseUrl()}/reset-password?token=${token}`
+
+  const emailSent = await sendEmail({
+    to: parsed.data.email.toLowerCase(),
+    subject: 'Reset your SIIF portal password',
+    text: `We received a request to reset your password. Use this link to continue: ${resetUrl}\n\nThis link expires in 2 hours. If you did not request this, ignore this email.`,
+    html: `<p>We received a request to reset your password.</p><p><a href="${resetUrl}">Reset your password</a></p><p>This link expires in 2 hours. If you did not request this, you can ignore this email.</p>`
+  })
+
+  if (!emailSent && !isEmailConfigured()) {
+    return NextResponse.json({
+      message: 'Password reset request created, but email is not configured.',
+      reset_token_preview: process.env.NODE_ENV === 'development' ? token : undefined,
+      reset_url_preview: process.env.NODE_ENV === 'development' ? resetUrl : undefined
+    }, { status: 500 })
+  }
+
   return NextResponse.json({
-    message: 'Password reset request created. Hook this token into your email service.',
-    reset_token_preview: process.env.NODE_ENV === 'development' ? token : undefined
+    message: 'Password reset email sent successfully.',
+    reset_token_preview: process.env.NODE_ENV === 'development' ? token : undefined,
+    reset_url_preview: process.env.NODE_ENV === 'development' ? resetUrl : undefined
   })
 }

@@ -3,6 +3,7 @@ import { accountStatusSchema } from '@/lib/validators'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { requireRole } from '@/lib/auth/guards'
 import { logActivity } from '@/lib/activity'
+import { revokeSessionsForUser } from '@/lib/auth/session'
 
 export const runtime = 'nodejs'
 
@@ -22,6 +23,8 @@ export async function PATCH (request: NextRequest, context: { params: Promise<{ 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
+
+  await revokeSessionsForUser(userId)
 
   await logActivity({
     actorUserId: admin.id,

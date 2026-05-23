@@ -52,6 +52,16 @@ export async function revokeSessionByToken (token: string): Promise<void> {
   await supabase.from('sessions').delete().eq('token_hash', hashSessionToken(token))
 }
 
+async function revokeSessionById (sessionId: string): Promise<void> {
+  const supabase = getSupabaseAdminClient()
+  await supabase.from('sessions').delete().eq('id', sessionId)
+}
+
+export async function revokeSessionsForUser (userId: string): Promise<void> {
+  const supabase = getSupabaseAdminClient()
+  await supabase.from('sessions').delete().eq('user_id', userId)
+}
+
 export async function revokeCurrentSession (): Promise<void> {
   const cookieStore = cookies()
   const token = cookieStore.get(getCookieName())?.value
@@ -87,6 +97,11 @@ export async function getSessionUser (): Promise<SessionUser | null> {
     .maybeSingle()
 
   if (userError || !user) return null
+
+  if (user.account_status !== 'active' && user.role !== 'admin') {
+    await revokeSessionById(session.id)
+    return null
+  }
 
   await supabase.from('sessions').update({ last_seen_at: new Date().toISOString() }).eq('id', session.id)
 

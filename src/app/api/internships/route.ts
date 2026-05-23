@@ -4,6 +4,7 @@ import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { requireSession } from '@/lib/auth/guards'
 import { getSessionUser } from '@/lib/auth/session'
 import { logActivity } from '@/lib/activity'
+import { getAppBaseUrl, sendEmail } from '@/lib/email'
 
 export const runtime = 'nodejs'
 
@@ -86,6 +87,22 @@ export async function POST (request: NextRequest) {
     entityId: data?.id ?? null,
     metadata: { title: parsed.data.title, company_id: companyId }
   })
+
+  const { data: studentRows } = await supabase
+    .from('users')
+    .select('id, full_name, email')
+    .eq('role', 'student')
+    .eq('account_status', 'active')
+
+  const internshipLink = `${getAppBaseUrl()}/student/browse`
+  const notificationTargets = (studentRows ?? []).filter((student: { email?: string | null }) => Boolean(student.email))
+
+  await Promise.allSettled(notificationTargets.map((student: { full_name?: string | null; email?: string | null }) => sendEmail({
+    to: student.email as string,
+    subject: `New internship opportunity: ${parsed.data.title}`,
+    text: `A new internship opportunity is now available: ${parsed.data.title}\n\nLocation: ${parsed.data.location}\nStipend: ${parsed.data.stipend}\nDeadline: ${parsed.data.deadline}\n\nView it here: ${internshipLink}`,
+    html: `<p>A new internship opportunity is now available.</p><p><strong>${parsed.data.title}</strong></p><p>Location: ${parsed.data.location}<br/>Stipend: ${parsed.data.stipend}<br/>Deadline: ${parsed.data.deadline}</p><p><a href="${internshipLink}">View internships</a></p>`
+  })))
 
   return NextResponse.json({ internship: data }, { status: 201 })
 }

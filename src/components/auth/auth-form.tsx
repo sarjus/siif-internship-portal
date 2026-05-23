@@ -16,6 +16,7 @@ export function AuthForm ({ mode }: { mode: Mode }) {
   const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [message, setMessage] = useState<string | null>(null)
   const [form, setForm] = useState({
     full_name: '',
     email: '',
@@ -34,6 +35,7 @@ export function AuthForm ({ mode }: { mode: Mode }) {
     event.preventDefault()
     setBusy(true)
     setError(null)
+    setMessage(null)
 
     try {
       const endpoint = mode === 'login' ? '/api/auth/login' : mode === 'register' ? '/api/auth/register' : '/api/auth/forgot-password'
@@ -56,7 +58,7 @@ export function AuthForm ({ mode }: { mode: Mode }) {
       }
 
       if (mode === 'forgot') {
-        setError(getResponseMessage(result, 'Reset request created. Check your email provider integration.'))
+        setMessage(getResponseMessage(result, 'If the account exists, a reset link has been sent.'))
         return
       }
 
@@ -148,6 +150,7 @@ export function AuthForm ({ mode }: { mode: Mode }) {
           )}
 
           {error ? <p className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">{error}</p> : null}
+          {message ? <p className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{message}</p> : null}
 
           <Button type="submit" className="w-full" size="lg" disabled={busy}>
             {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

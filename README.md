@@ -12,9 +12,24 @@ A modern internship management portal for incubator admins, companies, and stude
 ## Setup
 
 1. Install dependencies with `npm install`.
-2. Copy `.env.example` to `.env.local` and set the Supabase URL, anon key, and service role key.
+2. Copy `.env.example` to `.env.local` and set the Supabase URL, anon key, service role key, app URL, and SMTP email settings.
 3. Apply the schema in `supabase/schema.sql` to your Supabase project.
 4. Run the app with `npm run dev`.
+
+### Environment variables
+
+The app uses these variables from `.env.local`:
+
+* `NEXT_PUBLIC_SUPABASE_URL`
+* `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+* `SUPABASE_SERVICE_ROLE_KEY`
+* `APP_URL` or `NEXT_PUBLIC_APP_URL`
+* `EMAIL_SMTP_HOST`
+* `EMAIL_SMTP_PORT`
+* `EMAIL_SMTP_USER`
+* `EMAIL_SMTP_PASSWORD`
+* `EMAIL_SMTP_SECURE`
+* `EMAIL_FROM`
 
 ## Production deployment
 

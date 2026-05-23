@@ -13,6 +13,10 @@ export default async function CompanyOverviewPage () {
         {data.metrics.map((metric) => <MetricCard key={metric.label} metric={metric} />)}
       </section>
 
+      <section>
+        <ListPanel title="Saved internships" description="Recently saved openings from your company." items={data.highlights} />
+      </section>
+
       <section className="grid gap-6 xl:grid-cols-[1fr_1fr]">
         <Card>
           <CardHeader>
