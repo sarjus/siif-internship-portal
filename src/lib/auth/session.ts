@@ -63,7 +63,7 @@ export async function revokeSessionsForUser (userId: string): Promise<void> {
 }
 
 export async function revokeCurrentSession (): Promise<void> {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const token = cookieStore.get(getCookieName())?.value
 
   if (!token) return
@@ -72,7 +72,7 @@ export async function revokeCurrentSession (): Promise<void> {
 }
 
 export async function getSessionUser (): Promise<SessionUser | null> {
-  const cookieStore = cookies()
+  const cookieStore = await cookies()
   const token = cookieStore.get(getCookieName())?.value
 
   if (!token) return null
