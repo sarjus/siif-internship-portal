@@ -3,7 +3,7 @@ FROM node:20-slim
 WORKDIR /app
 
 # Copy package files first for Docker caching
-COPY package*.json ./
+COPY package.json package-lock.json ./
 
 # Faster, deterministic install
 RUN npm ci
