@@ -136,12 +136,13 @@ function parseStructuredDescription (description: string): InternshipDescription
   return result
 }
 
-export function InternshipBrowser ({ resumeUrl }: { resumeUrl: string }) {
+export function InternshipBrowser ({ resumeUrl, initialInternshipId }: { resumeUrl: string; initialInternshipId?: string }) {
   const [items, setItems] = useState<Internship[]>([])
   const [query, setQuery] = useState('')
   const [busyId, setBusyId] = useState<string | null>(null)
   const [expandedCompanyId, setExpandedCompanyId] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
+  const [didAutoFocus, setDidAutoFocus] = useState(false)
 
   useEffect(() => {
     void fetch('/api/internships', { cache: 'no-store' })
@@ -154,6 +155,22 @@ export function InternshipBrowser ({ resumeUrl }: { resumeUrl: string }) {
         setMessage(error instanceof Error ? error.message : 'Unable to load internships')
       })
   }, [])
+
+  useEffect(() => {
+    if (!initialInternshipId || didAutoFocus) return
+
+    const hasSelectedInternship = items.some((item) => item.id === initialInternshipId)
+    if (!hasSelectedInternship) return
+
+    setExpandedCompanyId(initialInternshipId)
+
+    const scrollTarget = document.getElementById(`internship-card-${initialInternshipId}`)
+    if (scrollTarget) {
+      scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+
+    setDidAutoFocus(true)
+  }, [didAutoFocus, initialInternshipId, items])
 
   const filteredItems = useMemo(() => {
     const value = query.trim().toLowerCase()
@@ -206,7 +223,11 @@ export function InternshipBrowser ({ resumeUrl }: { resumeUrl: string }) {
             const descriptionSections = parseStructuredDescription(item.description)
 
             return (
-              <div key={item.id} className="rounded-2xl border border-slate-200/10 bg-slate-100/5 p-4">
+              <div
+                key={item.id}
+                id={`internship-card-${item.id}`}
+                className={`rounded-2xl border bg-slate-100/5 p-4 ${expandedCompanyId === item.id ? 'border-aurora-400/60 ring-1 ring-aurora-400/30' : 'border-slate-200/10'}`}
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-semibold text-white">{item.title}</p>
