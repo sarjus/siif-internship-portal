@@ -136,6 +136,117 @@ function buildInternshipDescription (form: {
   return sections.join('\n\n')
 }
 
+function stripListPrefix (line: string): string {
+  return line.replace(/^\d+\.\s+/, '').replace(/^[-*]\s+/, '').trim()
+}
+
+function parseInternshipDescription (description: string): Pick<InternshipFormState, 'about' | 'who_can_apply' | 'other_requirements' | 'perks' | 'fee_type' | 'fee_amount' | 'fee_notes' | 'additional_info' | 'start_date' | 'skills_required'> {
+  const parsed: Pick<InternshipFormState, 'about' | 'who_can_apply' | 'other_requirements' | 'perks' | 'fee_type' | 'fee_amount' | 'fee_notes' | 'additional_info' | 'start_date' | 'skills_required'> = {
+    about: '',
+    who_can_apply: '',
+    other_requirements: '',
+    perks: '',
+    fee_type: 'no_fee',
+    fee_amount: '',
+    fee_notes: '',
+    additional_info: '',
+    start_date: 'Immediately',
+    skills_required: ''
+  }
+
+  const headerPattern = 'About the internship|Skill\\(s\\) required|Who can apply|Other requirements|Perks|Application fee|Additional information'
+  const sectionRegex = new RegExp(`(?:^|\\n\\n)(${headerPattern}):\\n([\\s\\S]*?)(?=\\n\\n(?:${headerPattern}):\\n|$)`, 'g')
+  const sections = new Map<string, string>()
+
+  for (const match of description.matchAll(sectionRegex)) {
+    const [, header, content] = match
+    sections.set(header, content.trim())
+  }
+
+  if (sections.size === 0) {
+    parsed.about = description.trim()
+    return parsed
+  }
+
+  parsed.about = sections.get('About the internship') ?? ''
+
+  const skills = sections.get('Skill(s) required')
+  if (skills) {
+    parsed.skills_required = skills
+      .split('\n')
+      .map(stripListPrefix)
+      .filter(Boolean)
+      .join(', ')
+  }
+
+  const whoCanApply = sections.get('Who can apply')
+  if (whoCanApply) {
+    parsed.who_can_apply = whoCanApply
+      .split('\n')
+      .map(stripListPrefix)
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  const otherRequirements = sections.get('Other requirements')
+  if (otherRequirements) {
+    parsed.other_requirements = otherRequirements
+      .split('\n')
+      .map(stripListPrefix)
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  const perks = sections.get('Perks')
+  if (perks) {
+    parsed.perks = perks
+      .split('\n')
+      .map(stripListPrefix)
+      .filter(Boolean)
+      .join('\n')
+  }
+
+  const fee = sections.get('Application fee')
+  if (fee) {
+    const feeLines = fee.split('\n').map((line) => line.trim()).filter(Boolean)
+    const hasNoFee = feeLines.some((line) => /no fee charged/i.test(line))
+
+    if (hasNoFee) {
+      parsed.fee_type = 'no_fee'
+    }
+
+    for (const line of feeLines) {
+      const cleanLine = stripListPrefix(line)
+      if (/^type:/i.test(cleanLine)) {
+        const value = cleanLine.replace(/^type:\s*/i, '').toLowerCase()
+        if (value.includes('refundable')) parsed.fee_type = 'refundable'
+        if (value.includes('one-time')) parsed.fee_type = 'one_time'
+      }
+      if (/^amount:/i.test(cleanLine)) {
+        parsed.fee_amount = cleanLine.replace(/^amount:\s*/i, '').trim()
+      }
+      if (/^notes:/i.test(cleanLine)) {
+        parsed.fee_notes = cleanLine.replace(/^notes:\s*/i, '').trim()
+      }
+    }
+  }
+
+  const additional = sections.get('Additional information')
+  if (additional) {
+    const additionalLines = additional.split('\n').map((line) => line.trim())
+    const startDateLine = additionalLines.find((line) => /^start date:/i.test(line))
+    if (startDateLine) {
+      parsed.start_date = startDateLine.replace(/^start date:\s*/i, '').trim() || 'Immediately'
+    }
+    parsed.additional_info = additionalLines
+      .filter((line) => line.length > 0 && !/^start date:/i.test(line))
+      .join('\n')
+      .trim()
+  }
+
+  return parsed
+}
+
 export function InternshipManager ({ companyId, adminMode = false }: { companyId?: string; adminMode?: boolean }) {
   const [internships, setInternships] = useState<Internship[]>([])
   const [busy, setBusy] = useState(false)
@@ -185,20 +296,22 @@ export function InternshipManager ({ companyId, adminMode = false }: { companyId
 
   useEffect(() => {
     if (!selected) return
+    const parsedDescription = parseInternshipDescription(selected.description)
+
     setForm({
       title: selected.title,
-      about: selected.description,
-      who_can_apply: '',
-      other_requirements: '',
-      perks: '',
-      fee_type: 'no_fee',
-      fee_amount: '',
-      fee_notes: '',
-      additional_info: '',
-      start_date: 'Immediately',
+      about: parsedDescription.about,
+      who_can_apply: parsedDescription.who_can_apply,
+      other_requirements: parsedDescription.other_requirements,
+      perks: parsedDescription.perks,
+      fee_type: parsedDescription.fee_type,
+      fee_amount: parsedDescription.fee_amount,
+      fee_notes: parsedDescription.fee_notes,
+      additional_info: parsedDescription.additional_info,
+      start_date: parsedDescription.start_date,
       duration: selected.duration,
       stipend: selected.stipend,
-      skills_required: selected.skills_required.join(', '),
+      skills_required: parsedDescription.skills_required || selected.skills_required.join(', '),
       deadline: selected.deadline,
       location: selected.location,
       internship_type: selected.internship_type,
