@@ -4,32 +4,8 @@ import { useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { InternshipEntryFields, type InternshipEntryFormState } from '@/components/dashboard/internship-entry-fields'
 import { getResponseMessage, readJsonResponse } from '@/lib/request'
-
-const internshipTypes = ['full_time', 'part_time', 'remote', 'hybrid'] as const
-
-type InternshipFormState = {
-  title: string
-  about: string
-  who_can_apply: string
-  other_requirements: string
-  perks: string
-  fee_type: 'no_fee' | 'one_time' | 'refundable'
-  fee_amount: string
-  fee_notes: string
-  additional_info: string
-  start_date: string
-  duration: string
-  stipend: string
-  skills_required: string
-  deadline: string
-  location: string
-  internship_type: (typeof internshipTypes)[number]
-  openings: string
-  company_id: string
-}
 
 function formatAsNumberedList (value: string): string {
   return value
@@ -124,7 +100,7 @@ function buildInternshipDescription (form: {
 export function CreateInternshipForm ({ companyId }: { companyId?: string }) {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
-  const [form, setForm] = useState<InternshipFormState>({
+  const [form, setForm] = useState<InternshipEntryFormState>({
     title: '',
     about: '',
     who_can_apply: '',
@@ -211,30 +187,7 @@ export function CreateInternshipForm ({ companyId }: { companyId?: string }) {
       </CardHeader>
       <CardContent>
         <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmit}>
-          <Input required placeholder="Internship profile title (e.g., Human Resources HR Internship)" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} className="md:col-span-2" />
-          <Textarea required placeholder="About the internship" value={form.about} onChange={(event) => setForm({ ...form, about: event.target.value })} className="md:col-span-2" />
-          <Input required placeholder="Skills required (comma separated)" value={form.skills_required} onChange={(event) => setForm({ ...form, skills_required: event.target.value })} className="md:col-span-2" />
-          <Textarea placeholder="Who can apply (one item per line)" value={form.who_can_apply} onChange={(event) => setForm({ ...form, who_can_apply: event.target.value })} className="md:col-span-2" />
-          <Textarea placeholder="Other requirements (one item per line)" value={form.other_requirements} onChange={(event) => setForm({ ...form, other_requirements: event.target.value })} className="md:col-span-2" />
-          <Textarea placeholder="Perks (one item per line, e.g., Certificate, Letter of recommendation)" value={form.perks} onChange={(event) => setForm({ ...form, perks: event.target.value })} className="md:col-span-2" />
-          <select value={form.fee_type} onChange={(event) => setForm({ ...form, fee_type: event.target.value as 'no_fee' | 'one_time' | 'refundable' })} className="h-11 rounded-2xl border border-slate-200/10 bg-slate-100/5 px-4 text-sm text-white outline-none focus:border-aurora-400">
-            <option value="no_fee">No application fee</option>
-            <option value="one_time">One-time application fee</option>
-            <option value="refundable">Refundable application fee</option>
-          </select>
-          <Input placeholder="Fee amount (e.g., INR 500)" value={form.fee_amount} onChange={(event) => setForm({ ...form, fee_amount: event.target.value })} />
-          <Textarea placeholder="Fee notes (optional)" value={form.fee_notes} onChange={(event) => setForm({ ...form, fee_notes: event.target.value })} className="md:col-span-2" />
-          <Input required placeholder="Duration (e.g., 3 months)" value={form.duration} onChange={(event) => setForm({ ...form, duration: event.target.value })} />
-          <Input required placeholder="Stipend (e.g., INR 20000-25000 /month)" value={form.stipend} onChange={(event) => setForm({ ...form, stipend: event.target.value })} />
-          <Input placeholder="Start date (e.g., Immediately or 22 May 2026)" value={form.start_date} onChange={(event) => setForm({ ...form, start_date: event.target.value })} />
-          <Input required type="date" value={form.deadline} onChange={(event) => setForm({ ...form, deadline: event.target.value })} />
-          <Input required placeholder="Location (e.g., Gurgaon or Remote)" value={form.location} onChange={(event) => setForm({ ...form, location: event.target.value })} />
-          <select value={form.internship_type} onChange={(event) => setForm({ ...form, internship_type: event.target.value as typeof internshipTypes[number] })} className="h-11 rounded-2xl border border-slate-200/10 bg-slate-100/5 px-4 text-sm text-white outline-none focus:border-aurora-400">
-            {internshipTypes.map((type) => <option key={type} value={type}>{type.replace('_', ' ')}</option>)}
-          </select>
-          <Input required type="number" min="1" placeholder="Number of openings" value={form.openings} onChange={(event) => setForm({ ...form, openings: event.target.value })} />
-          <Textarea placeholder="Additional information (optional)" value={form.additional_info} onChange={(event) => setForm({ ...form, additional_info: event.target.value })} className="md:col-span-2" />
-          <Input value={form.company_id} onChange={(event) => setForm({ ...form, company_id: event.target.value })} placeholder="Company ID (optional for admin)" className="md:col-span-2" />
+          <InternshipEntryFields form={form} onChange={(next) => setForm(next)} showCompanyIdField />
           {message ? <p className="md:col-span-2 rounded-2xl border border-slate-200/10 bg-slate-100/5 px-4 py-3 text-sm text-slate-200">{message}</p> : null}
           <div className="md:col-span-2 flex justify-end">
             <Button type="submit" disabled={busy}>

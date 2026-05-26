@@ -28,7 +28,7 @@ type InternshipOffering = {
   title: string
   company: string
   location: string
-  stipend: string
+  registrationFeeLabel: string
   duration: string
   internshipType: string
 }
@@ -37,10 +37,19 @@ type InternshipRow = {
   id: string | null
   title: string | null
   location: string | null
-  stipend: string | null
+  description: string | null
   duration: string | null
   internship_type: string | null
   companies?: Array<{ company_name?: string | null }> | { company_name?: string | null } | null
+}
+
+function getRegistrationFeeLabel (description: string | null | undefined): string {
+  if (!description) return 'Yes'
+
+  const normalized = description.toLowerCase()
+  const hasNoFee = normalized.includes('application fee:\n- no fee charged from students') || normalized.includes('no fee charged from students')
+
+  return hasNoFee ? 'Free' : 'Yes'
 }
 
 export default async function HomePage () {
@@ -53,7 +62,7 @@ export default async function HomePage () {
   try {
     const { data } = await supabase
       .from('internships')
-      .select('id, title, location, stipend, duration, internship_type, companies(company_name)')
+      .select('id, title, location, description, duration, internship_type, companies(company_name)')
       .order('created_at', { ascending: false })
       .limit(8)
 
@@ -66,7 +75,7 @@ export default async function HomePage () {
           title: row.title ?? 'Internship role',
           company: companyRow?.company_name ?? 'Incubated company',
           location: row.location ?? 'Location not specified',
-          stipend: row.stipend ?? 'Stipend not specified',
+          registrationFeeLabel: getRegistrationFeeLabel(row.description),
           duration: row.duration ?? 'Duration not specified',
           internshipType: row.internship_type ?? 'full_time'
         }
@@ -159,7 +168,7 @@ export default async function HomePage () {
                         <div className="mt-4 space-y-2 border-t border-slate-200 pt-4 text-sm text-slate-700">
                           <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
                             <p className="flex items-center gap-2"><MapPin className="h-4 w-4 text-slate-400" />{item.location}</p>
-                            <p className="flex items-center gap-2"><Wallet className="h-4 w-4 text-slate-400" />{item.stipend}</p>
+                            <p className="flex items-center gap-2"><Wallet className="h-4 w-4 text-slate-400" />{item.registrationFeeLabel}</p>
                           </div>
                           <p className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-slate-400" />{item.duration}</p>
                         </div>
