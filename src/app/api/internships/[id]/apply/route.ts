@@ -27,7 +27,12 @@ export async function POST (request: NextRequest, context: { params: Promise<{ i
     return NextResponse.json({ error: profileResult.error.message }, { status: 500 })
   }
 
-  if (isIncompleteStudentProfile((profileResult.data ?? null) as StudentProfileCompletionFields | null)) {
+  const profileWithPhone = {
+    ...((profileResult.data ?? {}) as StudentProfileCompletionFields),
+    phone: user.phone
+  }
+
+  if (isIncompleteStudentProfile(profileWithPhone)) {
     return NextResponse.json({
       error: 'Complete your profile before applying for internships.',
       redirectTo: '/student/profile'

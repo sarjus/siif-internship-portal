@@ -77,6 +77,7 @@ function normalizeSkills (skillsText: string): string[] {
 
 function isIncompleteDraft (draft: RegistrationDraft): boolean {
   return isIncompleteStudentProfile({
+    phone: draft.phone,
     college_name: draft.college_name,
     programme: draft.programme,
     study_year: draft.study_year,

@@ -27,6 +27,7 @@ function FieldBlock ({ label, children }: FieldBlockProps) {
 
 type StudentProfileFormProps = {
   initialValues: {
+    phone: string
     college_name: string
     programme: string
     study_year: string
@@ -125,6 +126,9 @@ export function StudentProfileForm ({ initialValues, userId, redirectPath }: Stu
       </CardHeader>
       <CardContent>
         <form className="space-y-4" onSubmit={handleSubmit}>
+          <FieldBlock label="Phone number">
+            <Input required placeholder="Phone number" value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} />
+          </FieldBlock>
           <FieldBlock label="College name">
             <Input required placeholder="College name" value={form.college_name} onChange={(event) => setForm({ ...form, college_name: event.target.value })} />
           </FieldBlock>

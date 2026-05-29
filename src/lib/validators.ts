@@ -56,6 +56,7 @@ export const companyProfileSchema = z.object({
 })
 
 export const studentProfileSchema = z.object({
+  phone: z.string().min(1, 'Phone number is required').max(30, 'Phone number is too long'),
   college_name: z.string().min(2, 'College name is required'),
   programme: z.string().min(2, 'Programme is required'),
   study_year: z.string().min(2, 'Year of studying is required'),

@@ -1,4 +1,5 @@
 export type StudentProfileCompletionFields = {
+  phone?: string | null
   college_name?: string | null
   programme?: string | null
   study_year?: string | null
@@ -15,6 +16,7 @@ function isMissingText (value: string | null | undefined): boolean {
 export function isIncompleteStudentProfile (profile: StudentProfileCompletionFields | null): boolean {
   if (!profile) return true
 
+  if (isMissingText(profile.phone)) return true
   if (isMissingText(profile.college_name)) return true
   if (isMissingText(profile.programme)) return true
   if (isMissingText(profile.study_year)) return true

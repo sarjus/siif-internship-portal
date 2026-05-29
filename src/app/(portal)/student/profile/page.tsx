@@ -47,6 +47,7 @@ export default async function StudentProfilePage ({ searchParams }: StudentProfi
         userId={user.id}
         redirectPath={redirectPath}
         initialValues={{
+          phone: user.phone ?? '',
           college_name: profile.college_name ?? '',
           programme: profile.programme ?? '',
           study_year: profile.study_year ?? '',

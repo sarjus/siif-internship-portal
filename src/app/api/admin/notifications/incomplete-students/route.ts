@@ -12,6 +12,7 @@ type StudentRow = {
   id: string
   full_name: string
   email: string
+  phone: string | null
   student_profiles?: StudentProfileCompletionFields[] | StudentProfileCompletionFields | null
 }
 
@@ -28,7 +29,7 @@ export async function POST (_request: NextRequest) {
 
   const studentsResult = await supabase
     .from('users')
-    .select('id, full_name, email, student_profiles(college_name, programme, study_year, current_cgpa, back_papers, department, skills)')
+    .select('id, full_name, email, phone, student_profiles(college_name, programme, study_year, current_cgpa, back_papers, department, skills)')
     .eq('role', 'student')
     .in('account_status', ['active', 'pending_approval'])
 
@@ -42,7 +43,10 @@ export async function POST (_request: NextRequest) {
       ? student.student_profiles[0] ?? null
       : student.student_profiles ?? null
 
-    return isIncompleteStudentProfile(profile)
+    return isIncompleteStudentProfile({
+      ...(profile ?? {}),
+      phone: student.phone
+    })
   })
 
   if (incompleteStudents.length === 0) {

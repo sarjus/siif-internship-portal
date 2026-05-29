@@ -34,9 +34,15 @@ export async function PATCH (request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  if (parsed.data.profile_image !== undefined) {
-    await supabase.from('users').update({ profile_image: parsed.data.profile_image || null }).eq('id', user.id)
+  const userUpdates: { phone: string; profile_image?: string | null } = {
+    phone: parsed.data.phone
   }
+
+  if (parsed.data.profile_image !== undefined) {
+    userUpdates.profile_image = parsed.data.profile_image || null
+  }
+
+  await supabase.from('users').update(userUpdates).eq('id', user.id)
 
   await logActivity({
     actorUserId: user.id,
