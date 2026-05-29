@@ -18,8 +18,14 @@ const roles = [
 
 export function NotificationCenter ({ items }: { items: DashboardListItem[] }) {
   const [busy, setBusy] = useState(false)
+  const [busyIncompleteReminder, setBusyIncompleteReminder] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [form, setForm] = useState({ title: '', body: '', target_roles: ['student'] as string[] })
+  const [reminderForm, setReminderForm] = useState({
+    notification_title: 'Complete your student profile',
+    email_subject: 'Action needed: Complete your student profile',
+    message: 'Please complete your profile details in the student portal so your account is fully ready for internship applications.'
+  })
 
   async function submitNotification (event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -48,6 +54,35 @@ export function NotificationCenter ({ items }: { items: DashboardListItem[] }) {
     }
   }
 
+  async function sendIncompleteProfileReminder () {
+    setBusyIncompleteReminder(true)
+    setMessage(null)
+
+    try {
+      const response = await fetch('/api/admin/notifications/incomplete-students', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(reminderForm)
+      })
+
+      const result = await readJsonResponse<{ error?: string; message?: string; notified?: number; emailed?: number; emailConfigured?: boolean }>(response)
+
+      if (!response.ok) {
+        throw new Error(getResponseMessage(result, 'Unable to send incomplete profile reminder'))
+      }
+
+      const notified = typeof result.notified === 'number' ? result.notified : 0
+      const emailed = typeof result.emailed === 'number' ? result.emailed : 0
+      const emailConfiguredText = result.emailConfigured ? '' : ' Email is not configured, so only in-app notifications were sent.'
+
+      setMessage(`Reminder sent to ${notified} students. Emails sent: ${emailed}.${emailConfiguredText}`)
+    } catch (submitError) {
+      setMessage(submitError instanceof Error ? submitError.message : 'Unable to send incomplete profile reminder')
+    } finally {
+      setBusyIncompleteReminder(false)
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -56,6 +91,37 @@ export function NotificationCenter ({ items }: { items: DashboardListItem[] }) {
       </CardHeader>
       <CardContent className="space-y-4">
         <form className="space-y-4" onSubmit={submitNotification}>
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-sm font-semibold text-slate-900">Incomplete profile reminder</p>
+            <p className="mt-1 text-sm text-slate-600">Customize the reminder before sending in-app notifications and emails to students with incomplete profiles.</p>
+            <div className="mt-4 space-y-3">
+              <Input
+                required
+                placeholder="Notification title"
+                value={reminderForm.notification_title}
+                onChange={(event) => setReminderForm({ ...reminderForm, notification_title: event.target.value })}
+              />
+              <Input
+                required
+                placeholder="Email subject"
+                value={reminderForm.email_subject}
+                onChange={(event) => setReminderForm({ ...reminderForm, email_subject: event.target.value })}
+              />
+              <Textarea
+                required
+                placeholder="Reminder message"
+                value={reminderForm.message}
+                onChange={(event) => setReminderForm({ ...reminderForm, message: event.target.value })}
+              />
+              <div className="flex justify-end">
+                <Button type="button" variant="outline" disabled={busyIncompleteReminder || busy} onClick={() => void sendIncompleteProfileReminder()}>
+                  {busyIncompleteReminder ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Notify incomplete profiles + email
+                </Button>
+              </div>
+            </div>
+          </div>
+
           <Input required placeholder="Announcement title" value={form.title} onChange={(event) => setForm({ ...form, title: event.target.value })} />
           <Textarea required placeholder="Message" value={form.body} onChange={(event) => setForm({ ...form, body: event.target.value })} />
           <div className="flex flex-wrap gap-2">

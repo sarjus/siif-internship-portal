@@ -86,8 +86,32 @@ export const notificationSchema = z.object({
   target_user_ids: z.array(z.string().uuid()).optional().default([])
 })
 
+export const incompleteProfileReminderSchema = z.object({
+  notification_title: z.string().min(3, 'Notification title is required'),
+  message: z.string().min(10, 'Reminder message is required'),
+  email_subject: z.string().min(3, 'Email subject is required')
+})
+
 export const accountStatusSchema = z.object({
   account_status: z.enum(['pending_approval', 'active', 'suspended', 'disabled'])
+})
+
+export const adminStudentUpdateSchema = z.object({
+  full_name: z.string().min(2, 'Full name is required'),
+  email: z.string().email('Enter a valid email address'),
+  phone: z.string().max(30).optional().or(z.literal('')),
+  account_status: z.enum(['pending_approval', 'active', 'suspended', 'disabled']),
+  college_name: z.string().max(120).optional().or(z.literal('')),
+  programme: z.string().max(120).optional().or(z.literal('')),
+  study_year: z.string().max(60).optional().or(z.literal('')),
+  current_cgpa: z.string().max(20).optional().or(z.literal('')),
+  back_papers: z.coerce.number().int().min(0, 'Back papers cannot be negative').default(0),
+  department: z.string().max(120).optional().or(z.literal('')),
+  skills: z.array(z.string().min(1)).default([]),
+  resume_url: z.string().url('Enter a valid resume URL').optional().or(z.literal('')),
+  github: z.string().url('Enter a valid GitHub URL').optional().or(z.literal('')),
+  linkedin: z.string().url('Enter a valid LinkedIn URL').optional().or(z.literal('')),
+  portfolio: z.string().url('Enter a valid portfolio URL').optional().or(z.literal(''))
 })
 
 export const companyApprovalSchema = z.object({

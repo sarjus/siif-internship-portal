@@ -3,9 +3,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { StudentProfileForm } from '@/components/dashboard/student-profile-form'
 import { requireRole } from '@/lib/auth/guards'
 
-export default async function StudentProfilePage () {
+type StudentProfilePageProps = {
+  searchParams?: {
+    redirect?: string
+  }
+}
+
+function getSafeRedirectPath (value: string | undefined): string | undefined {
+  if (!value || !value.startsWith('/')) {
+    return undefined
+  }
+
+  return value
+}
+
+export default async function StudentProfilePage ({ searchParams }: StudentProfilePageProps) {
   const user = await requireRole(['student'])
   const supabase = getSupabaseAdminClient()
+  const redirectPath = getSafeRedirectPath(typeof searchParams?.redirect === 'string' ? searchParams.redirect : undefined)
   const profileResult = await supabase
     .from('student_profiles')
     .select('college_name, programme, study_year, current_cgpa, back_papers, department, skills, resume_url, github, linkedin, portfolio')
@@ -30,6 +45,7 @@ export default async function StudentProfilePage () {
     <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
       <StudentProfileForm
         userId={user.id}
+        redirectPath={redirectPath}
         initialValues={{
           college_name: profile.college_name ?? '',
           programme: profile.programme ?? '',
@@ -49,7 +65,11 @@ export default async function StudentProfilePage () {
       <Card>
         <CardHeader>
           <CardTitle>Profile tips</CardTitle>
-          <CardDescription>Keep your details complete to improve internship discovery and shortlisting.</CardDescription>
+          <CardDescription>
+            {redirectPath
+              ? 'Complete your profile to continue with the internship application flow.'
+              : 'Keep your details complete to improve internship discovery and shortlisting.'}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3 text-sm text-slate-600">
           {[

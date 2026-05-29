@@ -3,7 +3,7 @@ import { MetricCard } from '@/components/dashboard/metric-card'
 import { getAdminDashboardData } from '@/lib/dashboard'
 import { requireRole } from '@/lib/auth/guards'
 import Link from 'next/link'
-import { Activity, ArrowUpRight, BellRing, CheckCircle2, FileSearch, ShieldCheck } from 'lucide-react'
+import { Activity, ArrowUpRight, BellRing, CheckCircle2, FileSearch, GraduationCap, ShieldCheck } from 'lucide-react'
 
 const overviewActions = [
   {
@@ -17,6 +17,12 @@ const overviewActions = [
     subtitle: 'Monitor incoming submissions across all companies.',
     href: '/admin/applications',
     Icon: FileSearch
+  },
+  {
+    title: 'Manage student registrations',
+    subtitle: 'Handle onboarding, profile corrections, and account status.',
+    href: '/admin/students',
+    Icon: GraduationCap
   },
   {
     title: 'Approve registrations',

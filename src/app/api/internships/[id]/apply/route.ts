@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { applicationSchema } from '@/lib/validators'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { requireRole } from '@/lib/auth/guards'
+import { isIncompleteStudentProfile, type StudentProfileCompletionFields } from '@/lib/student-profile'
 
 export const runtime = 'nodejs'
 
@@ -16,6 +17,23 @@ export async function POST (request: NextRequest, context: { params: Promise<{ i
   }
 
   const supabase = getSupabaseAdminClient()
+  const profileResult = await supabase
+    .from('student_profiles')
+    .select('college_name, programme, study_year, current_cgpa, back_papers, department, skills')
+    .eq('user_id', user.id)
+    .maybeSingle()
+
+  if (profileResult.error) {
+    return NextResponse.json({ error: profileResult.error.message }, { status: 500 })
+  }
+
+  if (isIncompleteStudentProfile((profileResult.data ?? null) as StudentProfileCompletionFields | null)) {
+    return NextResponse.json({
+      error: 'Complete your profile before applying for internships.',
+      redirectTo: '/student/profile'
+    }, { status: 403 })
+  }
+
   const { data: existing } = await supabase
     .from('applications')
     .select('id')

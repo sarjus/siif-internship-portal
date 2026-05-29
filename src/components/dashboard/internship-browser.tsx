@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Loader2, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -137,6 +138,7 @@ function parseStructuredDescription (description: string): InternshipDescription
 }
 
 export function InternshipBrowser ({ resumeUrl, initialInternshipId }: { resumeUrl: string; initialInternshipId?: string }) {
+  const router = useRouter()
   const [items, setItems] = useState<Internship[]>([])
   const [query, setQuery] = useState('')
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -195,7 +197,11 @@ export function InternshipBrowser ({ resumeUrl, initialInternshipId }: { resumeU
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resume_url: resumeUrl })
       })
-      const result = await readJsonResponse<{ error?: string; message?: string }>(response)
+      const result = await readJsonResponse<{ error?: string; message?: string; redirectTo?: string }>(response)
+      if (response.status === 403 && typeof result.redirectTo === 'string' && result.redirectTo) {
+        router.push(`${result.redirectTo}?redirect=/student/browse?internship=${internshipId}`)
+        return
+      }
       if (!response.ok) throw new Error(getResponseMessage(result, 'Unable to submit application'))
       setMessage('Application submitted successfully.')
       setItems((current) => current.map((item) => item.id === internshipId ? { ...item, applied: true } : item))

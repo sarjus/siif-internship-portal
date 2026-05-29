@@ -2,6 +2,7 @@
 
 import type { ReactNode } from 'react'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Loader2, Upload } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,7 +24,27 @@ function FieldBlock ({ label, children }: FieldBlockProps) {
   )
 }
 
-export function StudentProfileForm ({ initialValues, userId }: { initialValues: { college_name: string; programme: string; study_year: string; current_cgpa: string; back_papers: number; department: string; skills: string[]; resume_url: string; github: string; linkedin: string; portfolio: string; profile_image: string }; userId: string }) {
+type StudentProfileFormProps = {
+  initialValues: {
+    college_name: string
+    programme: string
+    study_year: string
+    current_cgpa: string
+    back_papers: number
+    department: string
+    skills: string[]
+    resume_url: string
+    github: string
+    linkedin: string
+    portfolio: string
+    profile_image: string
+  }
+  userId: string
+  redirectPath?: string
+}
+
+export function StudentProfileForm ({ initialValues, userId, redirectPath }: StudentProfileFormProps) {
+  const router = useRouter()
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [resumeFile, setResumeFile] = useState<File | null>(null)
@@ -77,6 +98,12 @@ export function StudentProfileForm ({ initialValues, userId }: { initialValues: 
 
       if (!response.ok) {
         throw new Error(getResponseMessage(result, 'Unable to update student profile'))
+      }
+
+      if (redirectPath) {
+        setMessage('Student profile updated successfully. Redirecting...')
+        router.push(redirectPath)
+        return
       }
 
       setMessage('Student profile updated successfully.')

@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Bell, BriefcaseBusiness, LayoutDashboard, Menu, Settings2, ShieldCheck, Users } from 'lucide-react'
+import { BarChart3, Bell, BriefcaseBusiness, GraduationCap, LayoutDashboard, Menu, Settings2, ShieldCheck, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { SessionUser, UserRole } from '@/lib/types'
 import { Badge } from '@/components/ui/badge'
@@ -21,7 +21,9 @@ function getNavigationItems (role: UserRole): NavigationItem[] {
     return [
       { label: 'Overview', href: '/admin', icon: LayoutDashboard },
       { label: 'Companies', href: '/admin/companies', icon: BriefcaseBusiness },
+      { label: 'Student Registrations', href: '/admin/students', icon: GraduationCap },
       { label: 'Applications', href: '/admin/applications', icon: Users },
+      { label: 'Company-wise Status', href: '/admin/applications/company-wise', icon: BarChart3 },
       { label: 'Approvals', href: '/admin/approvals', icon: ShieldCheck },
       { label: 'Notifications', href: '/admin/notifications', icon: Bell },
       { label: 'Activity', href: '/admin/activity', icon: Settings2 }
