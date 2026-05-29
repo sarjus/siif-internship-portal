@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import Image from 'next/image'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Loader2, Upload } from 'lucide-react'
@@ -165,9 +166,11 @@ export function StudentProfileForm ({ initialValues, userId, redirectPath }: Stu
                 <div className="space-y-2">
                   <p className="text-xs text-slate-300">Current profile photo:</p>
                   <a href={form.profile_image} target="_blank" rel="noreferrer" className="inline-block">
-                    <img
+                    <Image
                       src={form.profile_image}
                       alt="Current profile"
+                      width={80}
+                      height={80}
                       className="h-20 w-20 rounded-xl border border-slate-200/20 object-cover"
                     />
                   </a>

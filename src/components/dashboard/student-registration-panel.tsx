@@ -47,8 +47,9 @@ type RegistrationDraft = {
   portfolio: string
 }
 
+type CompletionFilter = 'all' | 'incomplete' | 'complete'
+
 const accountStatuses = ['pending_approval', 'active', 'suspended', 'disabled'] as const
-const completionFilters = ['all', 'incomplete', 'complete'] as const
 
 function toDraft (student: StudentRegistration): RegistrationDraft {
   return {
@@ -103,11 +104,11 @@ export function StudentRegistrationPanel ({
   initialCompletionFilter = 'all'
 }: {
   students: StudentRegistration[]
-  initialCompletionFilter?: typeof completionFilters[number]
+  initialCompletionFilter?: CompletionFilter
 }) {
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<'all' | StudentRegistration['account_status']>('all')
-  const [completionFilter, setCompletionFilter] = useState<typeof completionFilters[number]>(initialCompletionFilter)
+  const [completionFilter, setCompletionFilter] = useState<CompletionFilter>(initialCompletionFilter)
   const [busyUpdateId, setBusyUpdateId] = useState<string | null>(null)
   const [busyDeleteId, setBusyDeleteId] = useState<string | null>(null)
   const [removedIds, setRemovedIds] = useState<Set<string>>(new Set())
@@ -296,7 +297,7 @@ export function StudentRegistrationPanel ({
           </select>
           <select
             value={completionFilter}
-            onChange={(event) => setCompletionFilter(event.target.value as typeof completionFilters[number])}
+            onChange={(event) => setCompletionFilter(event.target.value as CompletionFilter)}
             className="h-11 rounded-2xl border border-slate-300 bg-white px-4 text-sm text-slate-900 outline-none"
           >
             <option value="all">All profiles</option>
