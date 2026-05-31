@@ -58,7 +58,7 @@ export async function PATCH (request: NextRequest, context: { params: Promise<{ 
     : { data: null }
 
   const statusLabel = parsed.data.status.replace(/_/g, ' ')
-  const applicationLink = `${getAppBaseUrl()}/company/applications`
+  const applicationLink = `${getAppBaseUrl(request.nextUrl.origin)}/company/applications`
 
   await Promise.allSettled([
     student?.email ? sendEmail({

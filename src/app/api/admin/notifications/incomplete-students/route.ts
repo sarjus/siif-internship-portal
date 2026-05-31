@@ -70,7 +70,7 @@ export async function POST (_request: NextRequest) {
     return NextResponse.json({ error: notificationResult.error.message }, { status: 500 })
   }
 
-  const profileLink = `${getAppBaseUrl()}/student/profile`
+  const profileLink = `${getAppBaseUrl(_request.nextUrl.origin)}/student/profile`
   const emailReady = isEmailConfigured()
   let emailedCount = 0
 

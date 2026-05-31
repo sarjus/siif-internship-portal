@@ -36,7 +36,7 @@ export async function POST (request: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const resetUrl = `${getAppBaseUrl()}/reset-password?token=${token}`
+  const resetUrl = `${getAppBaseUrl(request.nextUrl.origin)}/reset-password?token=${token}`
 
   const emailSent = await sendEmail({
     to: parsed.data.email.toLowerCase(),

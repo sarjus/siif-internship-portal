@@ -94,7 +94,7 @@ export async function POST (request: NextRequest) {
     .eq('role', 'student')
     .eq('account_status', 'active')
 
-  const internshipLink = `${getAppBaseUrl()}/student/browse`
+  const internshipLink = `${getAppBaseUrl(request.nextUrl.origin)}/student/browse`
   const notificationTargets = (studentRows ?? []).filter((student: { email?: string | null }) => Boolean(student.email))
 
   await Promise.allSettled(notificationTargets.map((student: { full_name?: string | null; email?: string | null }) => sendEmail({

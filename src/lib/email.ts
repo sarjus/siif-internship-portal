@@ -58,8 +58,50 @@ function createTransporter () {
   }
 }
 
-export function getAppBaseUrl (): string {
-  return process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+function normalizeBaseUrl (value: string): string {
+  const trimmed = value.trim().replace(/\/+$/, '')
+  if (!trimmed) {
+    return ''
+  }
+
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`
+}
+
+function isLocalhostUrl (url: string): boolean {
+  return /https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0)(:\d+)?$/i.test(url)
+}
+
+export function getAppBaseUrl (requestOrigin?: string): string {
+  const isProduction = process.env.NODE_ENV === 'production'
+
+  const candidates = [
+    process.env.APP_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+    process.env.NEXT_PUBLIC_SITE_URL,
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    process.env.VERCEL_URL,
+    requestOrigin
+  ]
+
+  for (const candidate of candidates) {
+    if (!candidate) {
+      continue
+    }
+
+    const normalized = normalizeBaseUrl(candidate)
+
+    if (!normalized) {
+      continue
+    }
+
+    if (isProduction && isLocalhostUrl(normalized)) {
+      continue
+    }
+
+    return normalized
+  }
+
+  return 'http://localhost:3000'
 }
 
 export function isEmailConfigured (): boolean {
