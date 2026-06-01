@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { BarChart3, Bell, BriefcaseBusiness, GraduationCap, LayoutDashboard, Menu, Settings2, ShieldCheck, Users } from 'lucide-react'
+import { BarChart3, Bell, BriefcaseBusiness, ChevronDown, ChevronRight, GraduationCap, LayoutDashboard, Menu, Settings2, ShieldCheck, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { SessionUser, UserRole } from '@/lib/types'
 import { Badge } from '@/components/ui/badge'
@@ -16,38 +16,66 @@ type NavigationItem = {
   icon: React.ComponentType<{ className?: string }>
 }
 
-function getNavigationItems (role: UserRole): NavigationItem[] {
+type NavigationGroup = {
+  title?: string
+  items: NavigationItem[]
+}
+
+function getNavigationGroups (role: UserRole): NavigationGroup[] {
   if (role === 'admin') {
     return [
-      { label: 'Overview', href: '/admin', icon: LayoutDashboard },
-      { label: 'Companies', href: '/admin/companies', icon: BriefcaseBusiness },
-      { label: 'Student Registrations', href: '/admin/students', icon: GraduationCap },
-      { label: 'Applications', href: '/admin/applications', icon: Users },
-      { label: 'Company-wise Status', href: '/admin/applications/company-wise', icon: BarChart3 },
-      { label: 'Approvals', href: '/admin/approvals', icon: ShieldCheck },
-      { label: 'Notifications', href: '/admin/notifications', icon: Bell },
-      { label: 'Activity', href: '/admin/activity', icon: Settings2 }
+      {
+        title: 'Core',
+        items: [
+          { label: 'Overview', href: '/admin', icon: LayoutDashboard }
+        ]
+      },
+      {
+        title: 'Careers',
+        items: [
+          { label: 'Student Registrations', href: '/admin/students', icon: GraduationCap },
+          { label: 'Student Account Moderation', href: '/admin/applications', icon: Users },
+          { label: 'Company-wise Status', href: '/admin/applications/company-wise', icon: BarChart3 }
+        ]
+      },
+      {
+        title: 'Operations',
+        items: [
+          { label: 'Companies', href: '/admin/companies', icon: BriefcaseBusiness },
+          { label: 'Approvals', href: '/admin/approvals', icon: ShieldCheck },
+          { label: 'Notifications', href: '/admin/notifications', icon: Bell },
+          { label: 'Activity', href: '/admin/activity', icon: Settings2 }
+        ]
+      }
     ]
   }
 
   if (role === 'company') {
     return [
-      { label: 'Overview', href: '/company', icon: LayoutDashboard },
-      { label: 'Profile', href: '/company/profile', icon: BriefcaseBusiness },
-      { label: 'Internships', href: '/company/internships', icon: Users },
-      { label: 'Applicants', href: '/company/applications', icon: ShieldCheck },
-      { label: 'Notifications', href: '/company/notifications', icon: Bell },
-      { label: 'Activity', href: '/company/activity', icon: Settings2 }
+      {
+        items: [
+          { label: 'Overview', href: '/company', icon: LayoutDashboard },
+          { label: 'Profile', href: '/company/profile', icon: BriefcaseBusiness },
+          { label: 'Internships', href: '/company/internships', icon: Users },
+          { label: 'Applicants', href: '/company/applications', icon: ShieldCheck },
+          { label: 'Notifications', href: '/company/notifications', icon: Bell },
+          { label: 'Activity', href: '/company/activity', icon: Settings2 }
+        ]
+      }
     ]
   }
 
   return [
-    { label: 'Overview', href: '/student', icon: LayoutDashboard },
-    { label: 'Profile', href: '/student/profile', icon: ShieldCheck },
-    { label: 'Applications', href: '/student/applications', icon: Users },
-    { label: 'Browse', href: '/student/browse', icon: BriefcaseBusiness },
-    { label: 'Notifications', href: '/student/notifications', icon: Bell },
-    { label: 'Activity', href: '/student/activity', icon: Settings2 }
+    {
+      items: [
+        { label: 'Overview', href: '/student', icon: LayoutDashboard },
+        { label: 'Profile', href: '/student/profile', icon: ShieldCheck },
+        { label: 'Applications', href: '/student/applications', icon: Users },
+        { label: 'Browse', href: '/student/browse', icon: BriefcaseBusiness },
+        { label: 'Notifications', href: '/student/notifications', icon: Bell },
+        { label: 'Activity', href: '/student/activity', icon: Settings2 }
+      ]
+    }
   ]
 }
 
@@ -60,7 +88,26 @@ function roleLabel (role: UserRole): string {
 export function DashboardShell ({ user, children }: { user: SessionUser; children: React.ReactNode }) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
-  const navItems = useMemo(() => getNavigationItems(user.role), [user.role])
+  const navGroups = useMemo(() => getNavigationGroups(user.role), [user.role])
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {}
+
+    navGroups.forEach((group, index) => {
+      if (!group.title) return
+      const groupKey = `${group.title}-${index}`
+      const hasActiveItem = group.items.some((item) => pathname === item.href.split('#')[0])
+      initial[groupKey] = hasActiveItem || group.title === 'Core'
+    })
+
+    return initial
+  })
+
+  function toggleGroup (groupKey: string): void {
+    setOpenGroups((current) => ({
+      ...current,
+      [groupKey]: !current[groupKey]
+    }))
+  }
 
   return (
     <div className="min-h-screen bg-dashboard-grid text-slate-800">
@@ -93,22 +140,39 @@ export function DashboardShell ({ user, children }: { user: SessionUser; childre
               </div>
             </div>
 
-            <nav className="space-y-1">
-              {navItems.map((item) => {
-                const ActiveIcon = item.icon
-                const active = pathname === item.href.split('#')[0]
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn('flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors hover:bg-slate-100', active ? 'bg-sky-100 text-sky-700' : 'text-slate-700')}
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    <ActiveIcon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                )
-              })}
+            <nav className="space-y-4">
+              {navGroups.map((group, groupIndex) => (
+                <div key={`${group.title ?? 'group'}-${groupIndex}`}>
+                  {group.title ? (
+                    <button
+                      type="button"
+                      className="mb-2 flex w-full items-center justify-between rounded-xl px-2 py-1.5 text-left text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 transition-colors hover:bg-slate-100"
+                      aria-expanded={openGroups[`${group.title}-${groupIndex}`] ?? false}
+                      onClick={() => toggleGroup(`${group.title}-${groupIndex}`)}
+                    >
+                      <span>{group.title}</span>
+                      {openGroups[`${group.title}-${groupIndex}`] ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                    </button>
+                  ) : null}
+                  <div className={cn('space-y-1', group.title && !(openGroups[`${group.title}-${groupIndex}`] ?? false) ? 'hidden' : '')}>
+                    {group.items.map((item) => {
+                      const ActiveIcon = item.icon
+                      const active = pathname === item.href.split('#')[0]
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={cn('flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium transition-colors hover:bg-slate-100', active ? 'bg-sky-100 text-sky-700' : 'text-slate-700')}
+                          onClick={() => setMobileOpen(false)}
+                        >
+                          <ActiveIcon className="h-4 w-4" />
+                          {item.label}
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
             </nav>
 
             <div className="mt-auto space-y-3 rounded-3xl border border-slate-200 bg-white p-4">

@@ -29,6 +29,8 @@ type InternshipOffering = {
   company: string
   location: string
   registrationFeeLabel: string
+  startDateLabel: string
+  registrationDeadline: string
   duration: string
   internshipType: string
 }
@@ -38,6 +40,7 @@ type InternshipRow = {
   title: string | null
   location: string | null
   description: string | null
+  deadline: string | null
   duration: string | null
   internship_type: string | null
   companies?: Array<{ company_name?: string | null }> | { company_name?: string | null } | null
@@ -52,6 +55,28 @@ function getRegistrationFeeLabel (description: string | null | undefined): strin
   return hasNoFee ? 'Free' : 'Yes'
 }
 
+function formatRegistrationDeadline (deadline: string | null | undefined): string {
+  if (!deadline) return 'Not specified'
+
+  const parsedDate = new Date(deadline)
+  if (Number.isNaN(parsedDate.getTime())) return deadline
+
+  return parsedDate.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  })
+}
+
+function getStartDateLabel (description: string | null | undefined): string {
+  if (!description) return 'Not specified'
+
+  const startDateMatch = description.match(/^\s*start date:\s*(.+)$/im)
+  const startDate = startDateMatch?.[1]?.trim()
+
+  return startDate && startDate.length > 0 ? startDate : 'Not specified'
+}
+
 export default async function HomePage () {
   const user = await getSessionUser()
   const supabase = getSupabaseAdminClient()
@@ -62,7 +87,7 @@ export default async function HomePage () {
   try {
     const { data } = await supabase
       .from('internships')
-      .select('id, title, location, description, duration, internship_type, companies(company_name)')
+      .select('id, title, location, description, deadline, duration, internship_type, companies(company_name)')
       .order('created_at', { ascending: false })
       .limit(8)
 
@@ -76,6 +101,8 @@ export default async function HomePage () {
           company: companyRow?.company_name ?? 'Incubated company',
           location: row.location ?? 'Location not specified',
           registrationFeeLabel: getRegistrationFeeLabel(row.description),
+          startDateLabel: getStartDateLabel(row.description),
+          registrationDeadline: formatRegistrationDeadline(row.deadline),
           duration: row.duration ?? 'Duration not specified',
           internshipType: row.internship_type ?? 'full_time'
         }
@@ -170,7 +197,9 @@ export default async function HomePage () {
                             <p className="flex items-center gap-2"><MapPin className="h-4 w-4 text-slate-400" />{item.location}</p>
                             <p className="flex items-center gap-2"><Wallet className="h-4 w-4 text-slate-400" />{item.registrationFeeLabel}</p>
                           </div>
+                          <p className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-slate-400" />Start date: {item.startDateLabel}</p>
                           <p className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-slate-400" />{item.duration}</p>
+                          <p className="flex items-center gap-2"><CalendarClock className="h-4 w-4 text-slate-400" />Deadline: {item.registrationDeadline}</p>
                         </div>
 
                         <div className="mt-6 flex items-center justify-between">

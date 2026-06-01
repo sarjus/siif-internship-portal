@@ -218,13 +218,15 @@ export async function getCompanyDashboardData (user: SessionUser): Promise<Dashb
         status: row.status,
         meta: row.applied_date ? format(new Date(row.applied_date), 'dd MMM yyyy') : ''
       })),
-      notifications: notifications.map((row) => ({
+      notifications: [
+        ...notifications.map((row) => ({
         id: row.id,
         title: row.title,
         subtitle: row.body,
         status: row.read_at ? 'read' : 'unread',
         meta: row.created_at
-      })),
+        }))
+      ],
       insights: [],
       activities: activityRows.map((row) => ({
         id: row.id,

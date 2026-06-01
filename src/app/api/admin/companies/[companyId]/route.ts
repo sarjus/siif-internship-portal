@@ -52,3 +52,49 @@ export async function PATCH (request: NextRequest, context: { params: Promise<{ 
 
   return NextResponse.json({ message: 'Company approval status updated' })
 }
+
+export async function DELETE (_request: NextRequest, context: { params: Promise<{ companyId: string }> }) {
+  const admin = await requireRole(['admin'])
+  const { companyId } = await context.params
+
+  const supabase = getSupabaseAdminClient()
+  const { data: company, error: companyLookupError } = await supabase
+    .from('companies')
+    .select('id, user_id, company_name')
+    .eq('id', companyId)
+    .maybeSingle()
+
+  if (companyLookupError || !company) {
+    return NextResponse.json({ error: 'Company not found' }, { status: 404 })
+  }
+
+  const { error: companyDeleteError } = await supabase
+    .from('companies')
+    .delete()
+    .eq('id', company.id)
+
+  if (companyDeleteError) {
+    return NextResponse.json({ error: companyDeleteError.message }, { status: 500 })
+  }
+
+  const { error: userDeleteError } = await supabase
+    .from('users')
+    .delete()
+    .eq('id', company.user_id)
+
+  if (userDeleteError) {
+    return NextResponse.json({ error: userDeleteError.message }, { status: 500 })
+  }
+
+  await revokeSessionsForUser(company.user_id)
+
+  await logActivity({
+    actorUserId: admin.id,
+    action: 'delete',
+    entityType: 'company',
+    entityId: company.id,
+    metadata: { company_name: company.company_name }
+  })
+
+  return NextResponse.json({ message: 'Company account deleted' })
+}

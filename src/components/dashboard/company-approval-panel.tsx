@@ -16,6 +16,7 @@ type CompanyRow = {
 }
 
 export function CompanyApprovalPanel ({ companies }: { companies: CompanyRow[] }) {
+  const [rows, setRows] = useState<CompanyRow[]>(companies)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
@@ -38,6 +39,28 @@ export function CompanyApprovalPanel ({ companies }: { companies: CompanyRow[] }
     }
   }
 
+  async function deleteCompany (companyId: string) {
+    const confirmed = window.confirm('Delete this company account permanently? This action cannot be undone.')
+    if (!confirmed) return
+
+    setBusyId(companyId)
+    setMessage(null)
+    try {
+      const response = await fetch(`/api/admin/companies/${companyId}`, {
+        method: 'DELETE'
+      })
+      const result = await readJsonResponse<{ error?: string; message?: string }>(response)
+      if (!response.ok) throw new Error(getResponseMessage(result, 'Unable to delete company account'))
+
+      setRows((current) => current.filter((row) => row.id !== companyId))
+      setMessage('Company account deleted.')
+    } catch (deleteError) {
+      setMessage(deleteError instanceof Error ? deleteError.message : 'Unable to delete company account')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -46,7 +69,7 @@ export function CompanyApprovalPanel ({ companies }: { companies: CompanyRow[] }
       </CardHeader>
       <CardContent className="space-y-3">
         {message ? <p className="rounded-2xl border border-slate-200/10 bg-slate-100/5 px-4 py-3 text-sm text-slate-200">{message}</p> : null}
-        {companies.map((company) => (
+        {rows.map((company) => (
           <div key={company.id} className="rounded-2xl border border-slate-200/10 bg-slate-100/5 p-4">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div>
@@ -60,15 +83,26 @@ export function CompanyApprovalPanel ({ companies }: { companies: CompanyRow[] }
                   {busyId === company.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Approve
                 </Button>
-                <Button size="sm" variant="destructive" type="button" onClick={() => void setApproval(company.id, false)} disabled={busyId === company.id}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  className="border-amber-300 text-amber-700 hover:border-amber-400 hover:bg-amber-50"
+                  onClick={() => void setApproval(company.id, false)}
+                  disabled={busyId === company.id}
+                >
                   {busyId === company.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                   Suspend
+                </Button>
+                <Button size="sm" variant="destructive" type="button" className="bg-rose-700 hover:bg-rose-800" onClick={() => void deleteCompany(company.id)} disabled={busyId === company.id}>
+                  {busyId === company.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Delete
                 </Button>
               </div>
             </div>
           </div>
         ))}
-        {companies.length === 0 ? <p className="rounded-2xl border border-dashed border-slate-200/10 bg-slate-100/5 px-4 py-6 text-sm text-slate-400">No companies pending review.</p> : null}
+        {rows.length === 0 ? <p className="rounded-2xl border border-dashed border-slate-200/10 bg-slate-100/5 px-4 py-6 text-sm text-slate-400">No companies pending review.</p> : null}
       </CardContent>
     </Card>
   )
