@@ -174,3 +174,4 @@ README.md
 .env.example
 supabase/schema.sql
 .env.example
+.vscode/settings.json

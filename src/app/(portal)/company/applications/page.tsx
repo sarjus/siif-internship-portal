@@ -3,6 +3,7 @@ import { ListPanel } from '@/components/dashboard/list-panel'
 import { getCompanyDashboardData } from '@/lib/dashboard'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { requireRole } from '@/lib/auth/guards'
+import { isIncompleteStudentProfile } from '@/lib/student-profile'
 
 type CompanyApplicationRow = {
   id: string
@@ -61,9 +62,16 @@ export default async function CompanyApplicationsPage () {
 
   const applications = applicationRows
     .filter((application) => {
-      if (user.role !== 'company') return true
-      const internshipRow = Array.isArray(application.internships) ? application.internships[0] ?? null : application.internships ?? null
-      return internshipRow?.company_id === company.id
+      if (user.role === 'company') {
+        const internshipRow = Array.isArray(application.internships) ? application.internships[0] ?? null : application.internships ?? null
+        if (internshipRow?.company_id !== company.id) return false
+      }
+
+      // Only show applicants who have completed their profile
+      const student = studentsById.get(application.student_id)
+      const profile = Array.isArray(student?.student_profiles) ? student?.student_profiles[0] ?? null : student?.student_profiles ?? null
+      const profileWithPhone = { ...((profile ?? {}) as object), phone: student?.phone ?? null } as Parameters<typeof isIncompleteStudentProfile>[0]
+      return !isIncompleteStudentProfile(profileWithPhone)
     })
     .map((application) => {
       const internshipRow = Array.isArray(application.internships) ? application.internships[0] ?? null : application.internships ?? null
