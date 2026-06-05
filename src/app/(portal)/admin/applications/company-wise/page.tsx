@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { requireRole } from '@/lib/auth/guards'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
+import { isIncompleteStudentProfile } from '@/lib/student-profile'
 
 type ApplicationRow = {
   id: string
@@ -250,9 +251,29 @@ export default async function AdminCompanyWiseApplicationStatusPage ({ searchPar
   const applications = (applicationsResult.data ?? []) as ApplicationRow[]
   const companies = (companiesResult.data ?? []) as CompanyRow[]
 
+  // Fetch student profiles to filter out incomplete ones
+  const studentIds = Array.from(new Set(applications.map((a) => a.student_id).filter(Boolean)))
+  const studentsResult = studentIds.length > 0
+    ? await supabase
+      .from('users')
+      .select('id, phone, student_profiles(college_name, programme, study_year, current_cgpa, back_papers, department, skills)')
+      .in('id', studentIds)
+    : { data: [] }
+
+  const completedStudentIds = new Set(
+    (studentsResult.data ?? [])
+      .filter((student) => {
+        const profile = Array.isArray(student.student_profiles) ? student.student_profiles[0] ?? null : student.student_profiles ?? null
+        return !isIncompleteStudentProfile({ ...((profile ?? {}) as object), phone: student.phone ?? null } as Parameters<typeof isIncompleteStudentProfile>[0])
+      })
+      .map((student) => student.id)
+  )
+
+  const filteredApplications = applications.filter((a) => completedStudentIds.has(a.student_id))
+
   const companyNameById = new Map<string, string>(companies.map((company) => [company.id, company.company_name ?? 'Company']))
-  const allSummaryRows = toSummaryRows(applications, companyNameById)
-  const allCompanyDetails = toCompanyInternshipDetails(applications, companyNameById)
+  const allSummaryRows = toSummaryRows(filteredApplications, companyNameById)
+  const allCompanyDetails = toCompanyInternshipDetails(filteredApplications, companyNameById)
 
   const companyDetails = companyQuery
     ? allCompanyDetails.filter((company) => company.companyName.toLowerCase().includes(companyQuery))
@@ -260,7 +281,7 @@ export default async function AdminCompanyWiseApplicationStatusPage ({ searchPar
 
   const visibleCompanyIds = new Set(companyDetails.map((company) => company.companyId))
   const summaryRows = allSummaryRows.filter((row) => visibleCompanyIds.has(row.companyId))
-  const visibleApplications = applications.filter((application) => {
+  const visibleApplications = filteredApplications.filter((application) => {
     const companyId = application.internships?.company_id
     return companyId ? visibleCompanyIds.has(companyId) : false
   })
