@@ -30,6 +30,7 @@ type ApplicationRow = {
   internship_id: string
   internships?: {
     title?: string | null
+    company_id?: string | null
   } | null
 }
 
@@ -173,9 +174,19 @@ export async function getCompanyDashboardData (user: SessionUser): Promise<Dashb
 
     const [internshipsCount, applicationsCount, internshipsResult, applicationsResult] = await Promise.all([
       safeCount(supabase.from('internships').select('*', { count: 'exact', head: true }).eq('company_id', companyId ?? '')),
-      safeCount(supabase.from('applications').select('*', { count: 'exact', head: true })),
+      safeCount(
+        supabase
+          .from('applications')
+          .select('*, internships!inner(company_id)', { count: 'exact', head: true })
+          .eq('internships.company_id', companyId ?? '')
+      ),
       supabase.from('internships').select('id, title, deadline, location, internship_type, openings').eq('company_id', companyId ?? '').order('created_at', { ascending: false }).limit(6),
-      supabase.from('applications').select('id, status, applied_date, student_id, internship_id, internships(title)').order('applied_date', { ascending: false }).limit(6)
+      supabase
+        .from('applications')
+        .select('id, status, applied_date, student_id, internship_id, internships!inner(title, company_id)')
+        .eq('internships.company_id', companyId ?? '')
+        .order('applied_date', { ascending: false })
+        .limit(6)
     ])
 
     const notificationsResult = await supabase

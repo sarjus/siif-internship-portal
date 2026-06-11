@@ -113,7 +113,7 @@ export function ApplicationReviewBoard ({ items }: { items: ApplicationReviewIte
 
   const filteredItems = items
     .filter((item) => {
-      if (statusFilter !== 'all' && getSelectableStatusValue(item.status) !== statusFilter) {
+      if (statusFilter !== 'all' && item.status !== statusFilter) {
         return false
       }
 
@@ -159,10 +159,11 @@ export function ApplicationReviewBoard ({ items }: { items: ApplicationReviewIte
   const paginatedItems = filteredItems.slice(pageStartIndex, pageEndIndex)
   const visibleIds = paginatedItems.map((item) => item.id)
   const activeSelectedIds = selectedIds.filter((id) => visibleIds.includes(id))
-  const allSelected = visibleIds.length > 0 && visibleIds.every((id) => activeSelectedIds.includes(id))
+  const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.includes(id))
 
   useEffect(() => {
-    setSelectedIds((current) => current.filter((id) => filteredItems.some((item) => item.id === id)))
+    const allIds = new Set(filteredItems.map((item) => item.id))
+    setSelectedIds((current) => current.filter((id) => allIds.has(id)))
   }, [filteredItems])
 
   useEffect(() => {
@@ -342,7 +343,7 @@ export function ApplicationReviewBoard ({ items }: { items: ApplicationReviewIte
   }
 
   async function updateSelectedStatuses () {
-    if (activeSelectedIds.length === 0) {
+    if (selectedIds.length === 0) {
       setMessage('Select at least one applicant to update status.')
       return
     }
@@ -350,7 +351,7 @@ export function ApplicationReviewBoard ({ items }: { items: ApplicationReviewIte
     setBulkBusy(true)
     setMessage(null)
     try {
-      const responses = await Promise.all(activeSelectedIds.map(async (applicationId) => {
+      const responses = await Promise.all(selectedIds.map(async (applicationId) => {
         const response = await fetch(`/api/applications/${applicationId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -365,8 +366,8 @@ export function ApplicationReviewBoard ({ items }: { items: ApplicationReviewIte
         throw new Error(getResponseMessage(failed[0]?.result, 'Some selected applications could not be updated'))
       }
 
-      setMessage(`Updated ${activeSelectedIds.length} applicant(s) to ${formatStatusLabel(bulkStatus)}.`)
-      setSelectedIds((current) => current.filter((id) => !activeSelectedIds.includes(id)))
+      setMessage(`Updated ${selectedIds.length} applicant(s) to ${formatStatusLabel(bulkStatus)}.`)
+      setSelectedIds([])
     } catch (updateError) {
       setMessage(updateError instanceof Error ? updateError.message : 'Unable to update selected applicants')
     } finally {
@@ -389,7 +390,7 @@ export function ApplicationReviewBoard ({ items }: { items: ApplicationReviewIte
             <select value={bulkStatus} onChange={(event) => setBulkStatus(event.target.value as StatusValue)} className="h-10 rounded-full border border-slate-300 bg-white px-4 text-sm text-slate-800 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100">
               {statuses.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
             </select>
-            <Button size="sm" type="button" onClick={() => void updateSelectedStatuses()} disabled={bulkBusy || activeSelectedIds.length === 0}>
+            <Button size="sm" type="button" onClick={() => void updateSelectedStatuses()} disabled={bulkBusy || selectedIds.length === 0}>
               {bulkBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Update selected
             </Button>

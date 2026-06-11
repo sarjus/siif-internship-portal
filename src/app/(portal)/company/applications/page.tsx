@@ -41,13 +41,19 @@ type StudentRow = {
 export default async function CompanyApplicationsPage () {
   const user = await requireRole(['company', 'admin'])
   const supabase = getSupabaseAdminClient()
-  const [data, companyResult, applicationsResult] = await Promise.all([
+  const [data, companyResult] = await Promise.all([
     getCompanyDashboardData(user),
-    supabase.from('companies').select('id, company_name, description, website, logo').eq('user_id', user.id).maybeSingle(),
-    supabase.from('applications').select('id, status, applied_date, student_id, internship_id, resume_url, internships(title, company_id)').order('applied_date', { ascending: false }).limit(20)
+    supabase.from('companies').select('id, company_name, description, website, logo').eq('user_id', user.id).maybeSingle()
   ])
 
   const company = companyResult.data ?? { id: '', company_name: user.company_name ?? user.full_name, description: '', website: '', logo: '' }
+
+  const applicationsResult = await supabase
+    .from('applications')
+    .select('id, status, applied_date, student_id, internship_id, resume_url, internships!inner(title, company_id)')
+    .eq('internships.company_id', company.id)
+    .order('applied_date', { ascending: false })
+
   const applicationRows = (applicationsResult.data ?? [] as CompanyApplicationRow[])
   const studentIds = Array.from(new Set(applicationRows.map((application) => application.student_id).filter(Boolean)))
 
