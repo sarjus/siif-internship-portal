@@ -158,7 +158,6 @@ export function ApplicationReviewBoard ({ items }: { items: ApplicationReviewIte
   const pageEndIndex = pageStartIndex + pageSize
   const paginatedItems = filteredItems.slice(pageStartIndex, pageEndIndex)
   const visibleIds = paginatedItems.map((item) => item.id)
-  const activeSelectedIds = selectedIds.filter((id) => visibleIds.includes(id))
   const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.includes(id))
 
   useEffect(() => {
