@@ -2,7 +2,6 @@
 
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { ArrowDown, ArrowUp, ArrowUpDown, Loader2 } from 'lucide-react'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -51,17 +50,6 @@ type SortDirection = 'asc' | 'desc'
 
 const pageSizeOptions = [5, 10, 20] as const
 
-function parsePageNumber (value: string | null, fallback: number): number {
-  if (!value) return fallback
-  const parsed = Number.parseInt(value, 10)
-  return Number.isNaN(parsed) || parsed < 1 ? fallback : parsed
-}
-
-function parsePageSize (value: string | null): (typeof pageSizeOptions)[number] {
-  const parsed = Number.parseInt(value ?? '', 10)
-  return pageSizeOptions.find((option) => option === parsed) ?? 10
-}
-
 function formatStatusLabel (status: string): string {
   const matched = statuses.find((item) => item.value === status)
   if (matched) return matched.label
@@ -92,9 +80,6 @@ function getSortValue (item: ApplicationReviewItem, key: SortKey): number | stri
 }
 
 export function ApplicationReviewBoard ({ items }: { items: ApplicationReviewItem[] }) {
-  const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
   const [busyId, setBusyId] = useState<string | null>(null)
   const [statusById, setStatusById] = useState<Record<string, StatusValue>>({})
   const [selectedIds, setSelectedIds] = useState<string[]>([])
@@ -105,8 +90,8 @@ export function ApplicationReviewBoard ({ items }: { items: ApplicationReviewIte
   const [statusFilter, setStatusFilter] = useState<'all' | StatusValue>('all')
   const [sortKey, setSortKey] = useState<SortKey>('applied_date')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
-  const [pageSize, setPageSize] = useState<(typeof pageSizeOptions)[number]>(() => parsePageSize(searchParams.get('pageSize')))
-  const [page, setPage] = useState(() => parsePageNumber(searchParams.get('page'), 1))
+  const [pageSize, setPageSize] = useState<(typeof pageSizeOptions)[number]>(10)
+  const [page, setPage] = useState(1)
 
   const deferredSearchTerm = useDeferredValue(searchTerm)
   const normalizedSearchTerm = deferredSearchTerm.trim().toLowerCase()
@@ -166,29 +151,8 @@ export function ApplicationReviewBoard ({ items }: { items: ApplicationReviewIte
   }, [filteredItems])
 
   useEffect(() => {
-    const nextPage = parsePageNumber(searchParams.get('page'), 1)
-    const nextPageSize = parsePageSize(searchParams.get('pageSize'))
-
-    setPage((current) => current === nextPage ? current : nextPage)
-    setPageSize((current) => current === nextPageSize ? current : nextPageSize)
-  }, [searchParams])
-
-  useEffect(() => {
     setPage(1)
   }, [normalizedSearchTerm, statusFilter, pageSize])
-
-  useEffect(() => {
-    if (page !== currentPage) {
-      setPage(currentPage)
-    }
-  }, [page, currentPage])
-
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('page', String(currentPage))
-    params.set('pageSize', String(pageSize))
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
-  }, [currentPage, pageSize, pathname, router, searchParams])
 
   function toggleSort (key: SortKey) {
     if (sortKey === key) {

@@ -1,6 +1,7 @@
 import { randomBytes, createHash } from 'node:crypto'
 import { cookies } from 'next/headers'
 import { addDays, isBefore } from 'date-fns'
+import { cache } from 'react'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import type { SessionUser } from '@/lib/types'
 
@@ -71,7 +72,7 @@ export async function revokeCurrentSession (): Promise<void> {
   cookieStore.delete(getCookieName())
 }
 
-export async function getSessionUser (): Promise<SessionUser | null> {
+export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
   const cookieStore = await cookies()
   const token = cookieStore.get(getCookieName())?.value
 
@@ -137,7 +138,7 @@ export async function getSessionUser (): Promise<SessionUser | null> {
   }
 
   return user
-}
+})
 
 export function sessionCookieName (): string {
   return getCookieName()

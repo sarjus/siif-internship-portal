@@ -172,21 +172,27 @@ export async function getCompanyDashboardData (user: SessionUser): Promise<Dashb
     const { data: company } = await supabase.from('companies').select('id').eq('user_id', user.id).maybeSingle()
     const companyId = company?.id
 
+    const { data: companyInternshipRows } = await supabase
+      .from('internships')
+      .select('id')
+      .eq('company_id', companyId ?? '')
+
+    const companyInternshipIds = (companyInternshipRows ?? []).map((r) => r.id)
+
     const [internshipsCount, applicationsCount, internshipsResult, applicationsResult] = await Promise.all([
       safeCount(supabase.from('internships').select('*', { count: 'exact', head: true }).eq('company_id', companyId ?? '')),
-      safeCount(
-        supabase
-          .from('applications')
-          .select('*, internships!inner(company_id)', { count: 'exact', head: true })
-          .eq('internships.company_id', companyId ?? '')
-      ),
+      companyInternshipIds.length > 0
+        ? safeCount(supabase.from('applications').select('*', { count: 'exact', head: true }).in('internship_id', companyInternshipIds))
+        : Promise.resolve(0),
       supabase.from('internships').select('id, title, deadline, location, internship_type, openings').eq('company_id', companyId ?? '').order('created_at', { ascending: false }).limit(6),
-      supabase
-        .from('applications')
-        .select('id, status, applied_date, student_id, internship_id, internships!inner(title, company_id)')
-        .eq('internships.company_id', companyId ?? '')
-        .order('applied_date', { ascending: false })
-        .limit(6)
+      companyInternshipIds.length > 0
+        ? supabase
+          .from('applications')
+          .select('id, status, applied_date, student_id, internship_id, internships(title)')
+          .in('internship_id', companyInternshipIds)
+          .order('applied_date', { ascending: false })
+          .limit(6)
+        : Promise.resolve({ data: [] as ApplicationRow[] })
     ])
 
     const notificationsResult = await supabase
