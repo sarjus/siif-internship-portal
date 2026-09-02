@@ -80,6 +80,7 @@ function getStartDateLabel (description: string | null | undefined): string {
 export default async function HomePage () {
   const user = await getSessionUser()
   const supabase = getSupabaseAdminClient()
+  const today = new Date().toISOString().slice(0, 10)
 
   let internshipOfferings: InternshipOffering[] = []
   let internshipsLoadError = false
@@ -88,6 +89,7 @@ export default async function HomePage () {
     const { data } = await supabase
       .from('internships')
       .select('id, title, location, description, deadline, duration, internship_type, companies(company_name)')
+      .or(`deadline.is.null,deadline.gte.${today}`)
       .order('created_at', { ascending: false })
       .limit(8)
 
